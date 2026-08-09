@@ -331,7 +331,17 @@ class App {
         const saveBtn = modal.querySelector('#save-template-exercises-btn');
         
         let selectedIds = [...(templateObj.exerciseIds || [])];
-        const allExercises = Store.getExercises();
+        let allExercises = Store.getExercises();
+        
+        const createBtn = modal.querySelector('#template-create-new-exercise-btn');
+        const muscleSelect = modal.querySelector('#template-new-exercise-muscle');
+        
+        MUSCLE_GROUPS.forEach(mg => {
+            const opt = document.createElement('option');
+            opt.value = mg;
+            opt.textContent = mg;
+            muscleSelect.appendChild(opt);
+        });
         
         const renderList = (filter = '') => {
             clearElement(listContainer);
@@ -370,6 +380,26 @@ class App {
                 item.appendChild(wrapper);
                 listContainer.appendChild(item);
             });
+            
+            if (filter.length > 0 && !filtered.find(e => e.name.toLowerCase() === filter.toLowerCase())) {
+                createBtn.style.display = 'block';
+                muscleSelect.style.display = 'block';
+            } else {
+                createBtn.style.display = 'none';
+                muscleSelect.style.display = 'none';
+            }
+        };
+        
+        createBtn.onclick = () => {
+            const name = searchInput.value.trim();
+            const muscle = muscleSelect.value;
+            if (name) {
+                const newEx = Store.addExercise(name, muscle);
+                selectedIds.push(newEx.id);
+                searchInput.value = '';
+                allExercises = Store.getExercises();
+                renderList();
+            }
         };
         
         searchInput.addEventListener('input', (e) => renderList(e.target.value));

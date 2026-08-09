@@ -239,10 +239,14 @@
                 <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">
                     Bu şablona dahil etmek istediğiniz hareketleri seçin:
                 </div>
-                <input type="text" id="template-exercise-search" placeholder="Egzersiz ara..." style="margin-bottom: 10px;">
+                <input type="text" id="template-exercise-search" placeholder="Ara veya yeni ekle..." autocomplete="off" style="margin-bottom: 10px;">
+                <select id="template-new-exercise-muscle" class="muscle-select" style="display: none; margin-bottom: 10px;">
+                    <!-- Populated by JS -->
+                </select>
                 <div class="selectable-list" id="template-exercise-list" style="flex: 1; overflow-y: auto;">
                     <!-- Exercises list with checkboxes go here -->
                 </div>
+                <button id="template-create-new-exercise-btn" class="btn primary-btn" style="display: none; margin-top: 10px; width: 100%;">Yeni Oluştur</button>
                 <div style="padding-top: 16px; margin-bottom: 20px;">
                     <button id="save-template-exercises-btn" class="btn primary-btn large-btn" style="width: 100%;">Kaydet</button>
                 </div>
