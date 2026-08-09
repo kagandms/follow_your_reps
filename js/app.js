@@ -66,59 +66,12 @@ class App {
         if (settingsBtn) {
             settingsBtn.addEventListener('click', () => this.showSettingsModal());
         }
-        
-        // Force Update App (Clear SW cache)
-        const updateBtn = content.querySelector('#force-update-btn');
-        if (updateBtn) {
-            updateBtn.addEventListener('click', () => {
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.getRegistrations().then((registrations) => {
-                        for (let registration of registrations) {
-                            registration.unregister();
-                        }
-                        // Optionally clear caches if needed
-                        if ('caches' in window) {
-                            caches.keys().then((names) => {
-                                for (let name of names) caches.delete(name);
-                            }).then(() => window.location.reload(true));
-                        } else {
-                            window.location.reload(true);
-                        }
-                    });
-                } else {
-                    window.location.reload(true);
-                }
-            });
-        }
 
         // Bind Start Session
         const startBtn = content.querySelector('#start-session-btn');
         startBtn.addEventListener('click', () => {
             this.startNewSession();
         });
-        
-        // Bind Install App
-        const installBtn = content.querySelector('#install-app-btn');
-        if (installBtn) {
-            const checkInstall = () => {
-                if (window.deferredPrompt) {
-                    installBtn.style.display = 'block';
-                }
-            };
-            checkInstall();
-            window.addEventListener('canInstallApp', checkInstall);
-            
-            installBtn.addEventListener('click', async () => {
-                if (window.deferredPrompt) {
-                    window.deferredPrompt.prompt();
-                    const { outcome } = await window.deferredPrompt.userChoice;
-                    if (outcome === 'accepted') {
-                        installBtn.style.display = 'none';
-                    }
-                    window.deferredPrompt = null;
-                }
-            });
-        }
         
         // Populate Volume Stats
         const volumeSection = content.querySelector('#volume-summary-section');
@@ -558,6 +511,52 @@ class App {
             };
             reader.readAsText(file);
         };
+        
+        // Force Update App (Clear SW cache)
+        const updateBtn = modal.querySelector('#force-update-btn');
+        if (updateBtn) {
+            updateBtn.onclick = () => {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then((registrations) => {
+                        for (let registration of registrations) {
+                            registration.unregister();
+                        }
+                        if ('caches' in window) {
+                            caches.keys().then((names) => {
+                                for (let name of names) caches.delete(name);
+                            }).then(() => window.location.reload(true));
+                        } else {
+                            window.location.reload(true);
+                        }
+                    });
+                } else {
+                    window.location.reload(true);
+                }
+            };
+        }
+
+        // Bind Install App
+        const installBtn = modal.querySelector('#install-app-btn');
+        if (installBtn) {
+            const checkInstall = () => {
+                if (window.deferredPrompt) {
+                    installBtn.style.display = 'block';
+                }
+            };
+            checkInstall();
+            window.addEventListener('canInstallApp', checkInstall);
+            
+            installBtn.onclick = async () => {
+                if (window.deferredPrompt) {
+                    window.deferredPrompt.prompt();
+                    const { outcome } = await window.deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        installBtn.style.display = 'none';
+                    }
+                    window.deferredPrompt = null;
+                }
+            };
+        }
         
         document.body.appendChild(modal);
     }
