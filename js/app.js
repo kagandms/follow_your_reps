@@ -362,6 +362,17 @@ class App {
                 cb.style.marginRight = '12px';
                 cb.style.transform = 'scale(1.3)';
                 
+                // If they click exactly on the checkbox, handle it and stop propagation
+                cb.onclick = (e) => {
+                    e.stopPropagation();
+                    if (cb.checked) {
+                        if (!selectedIds.includes(ex.id)) selectedIds.push(ex.id);
+                    } else {
+                        selectedIds = selectedIds.filter(id => id !== ex.id);
+                    }
+                };
+                
+                // If they click the row, toggle the checkbox manually
                 item.onclick = () => {
                     cb.checked = !cb.checked;
                     if (cb.checked) {
