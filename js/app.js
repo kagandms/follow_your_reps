@@ -386,6 +386,9 @@ class App {
         const container = modal.querySelector('#focus-sets-container');
         const prevPerformance = Store.getLastPerformance(exerciseDef.id, this.currentSession.id);
         
+        // Clone state for local editing
+        let localSets = JSON.parse(JSON.stringify(entry.sets));
+        
         const renderSets = () => {
             clearElement(container);
             
@@ -409,7 +412,7 @@ class App {
             `;
             container.appendChild(thead);
             
-            entry.sets.forEach((set, index) => {
+            localSets.forEach((set, index) => {
                 let prevSet = null;
                 if (prevPerformance && prevPerformance.sets && prevPerformance.sets[index]) {
                     prevSet = prevPerformance.sets[index];
@@ -421,21 +424,18 @@ class App {
                     prevSet, 
                     // onUpdate
                     (setIndex, field, value) => {
-                        entry.sets[setIndex][field] = value;
-                        Store.updateSession(this.currentSession);
+                        localSets[setIndex][field] = value;
                     },
                     // onToggle
                     (setIndex, isCompleted) => {
-                        entry.sets[setIndex].completed = isCompleted;
-                        Store.updateSession(this.currentSession);
+                        localSets[setIndex].completed = isCompleted;
                         if (isCompleted) {
                             this.timerWidget.classList.remove('hidden');
                         }
                     },
                     // onDelete
                     (setIndex) => {
-                        entry.sets.splice(setIndex, 1);
-                        Store.updateSession(this.currentSession);
+                        localSets.splice(setIndex, 1);
                         renderSets();
                     }
                 );
@@ -450,21 +450,31 @@ class App {
         addBtn.onclick = () => {
             let defaultWeight = 0;
             let defaultReps = 0;
-            const currentSetCount = entry.sets.length;
+            const currentSetCount = localSets.length;
             
             if (prevPerformance && prevPerformance.sets && prevPerformance.sets[currentSetCount]) {
                 defaultWeight = prevPerformance.sets[currentSetCount].weight;
                 defaultReps = prevPerformance.sets[currentSetCount].reps;
             } else if (currentSetCount > 0) {
-                const last = entry.sets[currentSetCount - 1];
+                const last = localSets[currentSetCount - 1];
                 defaultWeight = last.weight;
                 defaultReps = last.reps;
             }
             
-            entry.sets.push({ weight: defaultWeight, reps: defaultReps, completed: false });
-            Store.updateSession(this.currentSession);
+            localSets.push({ weight: defaultWeight, reps: defaultReps, completed: false });
             renderSets();
         };
+        
+        // Save Button
+        const saveBtn = modal.querySelector('#focus-save-btn');
+        if (saveBtn) {
+            saveBtn.onclick = () => {
+                entry.sets = localSets;
+                Store.updateSession(this.currentSession);
+                document.body.removeChild(modal);
+                this.renderSessionExercises();
+            };
+        }
         
         // Show History Button
         const historyBtn = modal.querySelector('#focus-show-history-btn');
