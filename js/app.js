@@ -330,10 +330,11 @@ class App {
         const listContainer = modal.querySelector('#template-exercise-list');
         const saveBtn = modal.querySelector('#save-template-exercises-btn');
         
-        let selectedIds = [...(templateObj.exerciseIds || [])];
+        let templateExercises = [...(templateObj.exercises || [])];
+        const getExConfig = (id) => templateExercises.find(e => e.exerciseId === id);
+        
         let allExercises = Store.getExercises();
         
-        const createBtn = modal.querySelector('#template-create-new-exercise-btn');
         const muscleSelect = modal.querySelector('#template-new-exercise-muscle');
         
         MUSCLE_GROUPS.forEach(mg => {
@@ -351,44 +352,94 @@ class App {
                 const item = document.createElement('div');
                 item.className = 'list-item';
                 item.style.cursor = 'pointer';
+                item.style.flexDirection = 'column';
+                item.style.alignItems = 'stretch';
+                
+                const wrapper = document.createElement('div');
+                wrapper.style.display = 'flex';
+                wrapper.style.alignItems = 'center';
                 
                 const titleDiv = document.createElement('div');
                 titleDiv.className = 'list-item-title';
                 titleDiv.textContent = ex.name;
                 
+                const config = getExConfig(ex.id);
+                const isSelected = !!config;
+                
                 const cb = document.createElement('input');
                 cb.type = 'checkbox';
-                cb.checked = selectedIds.includes(ex.id);
+                cb.checked = isSelected;
                 cb.style.marginRight = '12px';
                 cb.style.transform = 'scale(1.3)';
                 
-                // If they click exactly on the checkbox, handle it and stop propagation
-                cb.onclick = (e) => {
-                    e.stopPropagation();
-                    if (cb.checked) {
-                        if (!selectedIds.includes(ex.id)) selectedIds.push(ex.id);
-                    } else {
-                        selectedIds = selectedIds.filter(id => id !== ex.id);
-                    }
-                };
-                
-                // If they click the row, toggle the checkbox manually
-                item.onclick = () => {
-                    cb.checked = !cb.checked;
-                    if (cb.checked) {
-                        if (!selectedIds.includes(ex.id)) selectedIds.push(ex.id);
-                    } else {
-                        selectedIds = selectedIds.filter(id => id !== ex.id);
-                    }
-                };
-                
-                const wrapper = document.createElement('div');
-                wrapper.style.display = 'flex';
-                wrapper.style.alignItems = 'center';
                 wrapper.appendChild(cb);
                 wrapper.appendChild(titleDiv);
                 
+                const configDiv = document.createElement('div');
+                configDiv.style.display = isSelected ? 'flex' : 'none';
+                configDiv.style.gap = '10px';
+                configDiv.style.marginTop = '10px';
+                configDiv.style.paddingLeft = '28px';
+                
+                const setsInput = document.createElement('input');
+                setsInput.type = 'number';
+                setsInput.placeholder = 'Set';
+                setsInput.value = config ? config.sets : '';
+                setsInput.style.flex = '1';
+                setsInput.style.padding = '8px';
+                setsInput.style.borderRadius = '6px';
+                setsInput.style.border = '1px solid var(--border-color)';
+                setsInput.style.background = 'var(--bg-color)';
+                setsInput.style.color = 'var(--text-color)';
+                
+                const repsInput = document.createElement('input');
+                repsInput.type = 'number';
+                repsInput.placeholder = 'Tekrar';
+                repsInput.value = config ? config.reps : '';
+                repsInput.style.flex = '1';
+                repsInput.style.padding = '8px';
+                repsInput.style.borderRadius = '6px';
+                repsInput.style.border = '1px solid var(--border-color)';
+                repsInput.style.background = 'var(--bg-color)';
+                repsInput.style.color = 'var(--text-color)';
+                
+                configDiv.appendChild(setsInput);
+                configDiv.appendChild(repsInput);
+                
+                configDiv.onclick = (e) => e.stopPropagation();
+                
+                const toggle = () => {
+                    if (cb.checked) {
+                        if (!getExConfig(ex.id)) templateExercises.push({ exerciseId: ex.id, sets: setsInput.value, reps: repsInput.value });
+                        configDiv.style.display = 'flex';
+                    } else {
+                        templateExercises = templateExercises.filter(e => e.exerciseId !== ex.id);
+                        configDiv.style.display = 'none';
+                    }
+                };
+                
+                cb.onclick = (e) => {
+                    e.stopPropagation();
+                    toggle();
+                };
+                
+                item.onclick = () => {
+                    cb.checked = !cb.checked;
+                    toggle();
+                };
+                
+                setsInput.oninput = () => {
+                    const cfg = getExConfig(ex.id);
+                    if (cfg) cfg.sets = setsInput.value;
+                };
+                
+                repsInput.oninput = () => {
+                    const cfg = getExConfig(ex.id);
+                    if (cfg) cfg.reps = repsInput.value;
+                };
+                
                 item.appendChild(wrapper);
+                item.appendChild(configDiv);
                 listContainer.appendChild(item);
             });
             
@@ -409,11 +460,11 @@ class App {
                 if (!exists) {
                     const muscle = muscleSelect.value;
                     const newEx = Store.addExercise(name, muscle);
-                    selectedIds.push(newEx.id);
+                    templateExercises.push({ exerciseId: newEx.id, sets: '', reps: '' });
                 }
             }
             
-            Store.updateTemplate(templateObj.id, templateObj.name, selectedIds);
+            Store.updateTemplate(templateObj.id, templateObj.name, templateExercises);
             document.body.removeChild(modal);
             if (onSaved) onSaved();
         };
@@ -444,7 +495,22 @@ class App {
             templatesArea.style.display = 'block';
             templates.forEach(t => {
                 const pill = Components.renderTemplatePill(t, () => {
-                    if (t.exerciseIds && t.exerciseIds.length > 0) {
+                    if (t.exercises && t.exercises.length > 0) {
+                        t.exercises.forEach(exConfig => {
+                            let customSets = null;
+                            const setsCount = parseInt(exConfig.sets, 10);
+                            const repsCount = parseInt(exConfig.reps, 10) || 0;
+                            if (setsCount > 0) {
+                                customSets = [];
+                                for (let i = 0; i < setsCount; i++) {
+                                    customSets.push({ weight: 0, reps: repsCount, completed: false });
+                                }
+                            }
+                            this.addExerciseToSession(exConfig.exerciseId, false, customSets); 
+                        });
+                        this.renderSessionExercises();
+                        document.body.removeChild(modal);
+                    } else if (t.exerciseIds && t.exerciseIds.length > 0) {
                         t.exerciseIds.forEach(exId => {
                             this.addExerciseToSession(exId, false); 
                         });
@@ -539,13 +605,16 @@ class App {
         document.body.appendChild(modal);
     }
 
-    addExerciseToSession(exerciseId, openFocus = true) {
+    addExerciseToSession(exerciseId, openFocus = true, customSetsArray = null) {
         if (!this.currentSession) return;
         
-        // Default 1 empty set
         let initialSets = [
             { weight: 0, reps: 0, completed: false }
         ];
+        
+        if (customSetsArray && customSetsArray.length > 0) {
+            initialSets = customSetsArray;
+        }
         
         this.currentSession.entries.push({
             exerciseId: exerciseId,

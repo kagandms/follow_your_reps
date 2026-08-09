@@ -56,31 +56,40 @@ export const Store = {
 
     // --- TEMPLATES ---
     getTemplates() {
-        return loadData().templates;
+        const data = loadData();
+        return (data.templates || []).map(t => {
+            // Backward compatibility
+            if (!t.exercises && t.exerciseIds) {
+                t.exercises = t.exerciseIds.map(id => ({ exerciseId: id, sets: '', reps: '' }));
+            }
+            if (!t.exercises) t.exercises = [];
+            return t;
+        });
     },
 
     getTemplate(id) {
-        return loadData().templates.find(t => t.id === id);
+        return this.getTemplates().find(t => t.id === id);
     },
 
-    saveTemplate(name, exerciseIds) {
+    saveTemplate(name, exercises) {
         const data = loadData();
         const newTemplate = {
             id: generateId(),
             name,
-            exerciseIds
+            exercises
         };
         data.templates.push(newTemplate);
         saveData(data);
         return newTemplate;
     },
     
-    updateTemplate(id, name, exerciseIds) {
+    updateTemplate(id, name, exercises) {
         const data = loadData();
         const index = data.templates.findIndex(t => t.id === id);
         if (index !== -1) {
             data.templates[index].name = name;
-            data.templates[index].exerciseIds = exerciseIds;
+            data.templates[index].exercises = exercises;
+            delete data.templates[index].exerciseIds; // Clean up old schema
             saveData(data);
         }
     },
