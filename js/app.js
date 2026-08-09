@@ -86,10 +86,14 @@ class App {
         // Populate Templates
         const templatesList = content.querySelector('#home-templates-list');
         const manageTemplatesBtn = content.querySelector('#manage-templates-btn');
+        const manageExercisesBtn = content.querySelector('#manage-exercises-btn');
         const templates = Store.getTemplates();
         
         if (manageTemplatesBtn) {
             manageTemplatesBtn.addEventListener('click', () => this.showTemplateManagerModal());
+        }
+        if (manageExercisesBtn) {
+            manageExercisesBtn.addEventListener('click', () => this.showExerciseManagerModal());
         }
         
         if (templates.length === 0) {
@@ -477,6 +481,73 @@ class App {
         };
         
         renderList();
+        document.body.appendChild(modal);
+    }
+
+    showExerciseManagerModal() {
+        const template = document.getElementById('tpl-exercise-manager');
+        const content = template.content.cloneNode(true);
+        const modal = content.querySelector('.modal-view').parentNode; // The overlay
+        
+        const closeBtn = modal.querySelector('.close-modal-btn');
+        closeBtn.onclick = () => document.body.removeChild(modal);
+        
+        const searchInput = modal.querySelector('#exercise-search-input');
+        const listContainer = modal.querySelector('#exercise-manager-list');
+        
+        const renderList = (filter = '') => {
+            clearElement(listContainer);
+            let exercises = Store.getExercises();
+            if (filter) {
+                exercises = exercises.filter(e => e.name.toLowerCase().includes(filter.toLowerCase()));
+            }
+            
+            exercises.forEach(ex => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'list-item-title';
+                titleDiv.textContent = ex.name;
+                titleDiv.style.flex = '1';
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'icon-btn';
+                editBtn.style.color = 'var(--primary-color)';
+                editBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`;
+                editBtn.onclick = (e) => {
+                    const newName = prompt('Egzersiz için yeni isim:', ex.name);
+                    if (newName && newName.trim() !== '') {
+                        Store.updateExercise(ex.id, newName.trim(), ex.muscleGroup);
+                        renderList(searchInput.value);
+                    }
+                };
+                
+                const delBtn = document.createElement('button');
+                delBtn.className = 'icon-btn danger';
+                delBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+                delBtn.onclick = (e) => {
+                    if (confirm(`'${ex.name}' egzersizini silmek istediğinize emin misiniz? (Şablonlarınızdan da silinecektir)`)) {
+                        Store.deleteExercise(ex.id);
+                        renderList(searchInput.value);
+                    }
+                };
+                
+                const actions = document.createElement('div');
+                actions.style.display = 'flex';
+                actions.style.gap = '8px';
+                actions.appendChild(editBtn);
+                actions.appendChild(delBtn);
+                
+                item.appendChild(titleDiv);
+                item.appendChild(actions);
+                listContainer.appendChild(item);
+            });
+        };
+        
+        searchInput.addEventListener('input', (e) => renderList(e.target.value));
+        renderList();
+        
         document.body.appendChild(modal);
     }
 

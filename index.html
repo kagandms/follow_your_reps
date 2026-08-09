@@ -49,8 +49,11 @@
             <!-- NEW: Sabit Günler (Templates) Menu -->
             <section class="templates-section" style="margin-bottom: 24px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <h2 style="margin: 0;">Sabit Günlerim (Şablonlar)</h2>
-                    <button id="manage-templates-btn" class="icon-btn outline-btn" style="padding: 4px 12px; border-radius: 20px; font-size: 0.85rem;">Yönet</button>
+                    <h2 style="margin: 0;">Sabit Günlerim</h2>
+                    <div style="display: flex; gap: 6px;">
+                        <button id="manage-exercises-btn" class="icon-btn outline-btn" style="padding: 4px 12px; border-radius: 20px; font-size: 0.85rem;">Hareketler</button>
+                        <button id="manage-templates-btn" class="icon-btn outline-btn" style="padding: 4px 12px; border-radius: 20px; font-size: 0.85rem;">Yönet</button>
+                    </div>
                 </div>
                 <div id="home-templates-list" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px;">
                     <!-- Populated by JS. E.g. little pill buttons for each template -->
@@ -248,6 +251,24 @@
                 <button id="template-create-new-exercise-btn" class="btn primary-btn" style="display: none; margin-top: 10px; width: 100%;">Yeni Oluştur</button>
                 <div style="padding-top: 16px; margin-bottom: 20px;">
                     <button id="save-template-exercises-btn" class="btn primary-btn large-btn" style="width: 100%;">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- TEMPLATE: EXERCISE MANAGER MODAL -->
+    <template id="tpl-exercise-manager">
+        <div class="view modal-view" id="exercise-manager-modal">
+            <div class="modal-header">
+                <h2>Hareketleri Yönet</h2>
+                <button class="icon-btn close-modal-btn">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body" style="padding-top: 10px; display: flex; flex-direction: column; height: calc(100vh - 60px);">
+                <input type="text" id="exercise-search-input" placeholder="Egzersiz ara..." style="margin-bottom: 10px;">
+                <div id="exercise-manager-list" class="selectable-list" style="flex: 1; overflow-y: auto;">
+                    <!-- List goes here -->
                 </div>
             </div>
         </div>

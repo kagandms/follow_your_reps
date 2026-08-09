@@ -53,6 +53,35 @@ export const Store = {
         saveData(data);
         return newExercise;
     },
+    
+    updateExercise(id, name, muscleGroup) {
+        const data = loadData();
+        const index = data.exercises.findIndex(e => e.id === id);
+        if (index !== -1) {
+            data.exercises[index].name = name;
+            data.exercises[index].muscleGroup = muscleGroup || data.exercises[index].muscleGroup;
+            saveData(data);
+        }
+    },
+    
+    deleteExercise(id) {
+        const data = loadData();
+        data.exercises = data.exercises.filter(e => e.id !== id);
+        
+        // Remove exercise from all templates to prevent reference errors
+        if (data.templates) {
+            data.templates.forEach(t => {
+                if (t.exercises) {
+                    t.exercises = t.exercises.filter(ex => ex.exerciseId !== id);
+                }
+                if (t.exerciseIds) {
+                    t.exerciseIds = t.exerciseIds.filter(exId => exId !== id);
+                }
+            });
+        }
+        
+        saveData(data);
+    },
 
     // --- TEMPLATES ---
     getTemplates() {
