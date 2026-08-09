@@ -157,6 +157,17 @@ export const Components = {
         
         item.appendChild(contentDiv);
         
+        // Edit button
+        const editBtn = document.createElement('button');
+        editBtn.className = 'icon-btn';
+        editBtn.style.color = 'var(--primary-color)';
+        editBtn.style.marginRight = '8px';
+        editBtn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`;
+        editBtn.onclick = (e) => {
+            e.stopPropagation();
+            onClick(); // Same action as clicking the item itself
+        };
+
         // Delete button
         const delBtn = document.createElement('button');
         delBtn.className = 'icon-btn danger delete-session-btn';
@@ -167,7 +178,14 @@ export const Components = {
                 onDelete(session.id);
             }
         };
-        item.appendChild(delBtn);
+        
+        const actionsDiv = document.createElement('div');
+        actionsDiv.style.display = 'flex';
+        actionsDiv.style.alignItems = 'center';
+        actionsDiv.appendChild(editBtn);
+        actionsDiv.appendChild(delBtn);
+        
+        item.appendChild(actionsDiv);
         
         return item;
     },
