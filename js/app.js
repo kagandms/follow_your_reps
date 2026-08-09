@@ -97,6 +97,29 @@ class App {
             this.startNewSession();
         });
         
+        // Bind Install App
+        const installBtn = content.querySelector('#install-app-btn');
+        if (installBtn) {
+            const checkInstall = () => {
+                if (window.deferredPrompt) {
+                    installBtn.style.display = 'block';
+                }
+            };
+            checkInstall();
+            window.addEventListener('canInstallApp', checkInstall);
+            
+            installBtn.addEventListener('click', async () => {
+                if (window.deferredPrompt) {
+                    window.deferredPrompt.prompt();
+                    const { outcome } = await window.deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        installBtn.style.display = 'none';
+                    }
+                    window.deferredPrompt = null;
+                }
+            });
+        }
+        
         // Populate Volume Stats
         const volumeSection = content.querySelector('#volume-summary-section');
         const volumeContainer = content.querySelector('#volume-stats-container');
@@ -543,4 +566,15 @@ class App {
 // Bootstrap
 window.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
+});
+
+// PWA Installation Logic
+window.deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the mini-infobar from appearing on mobile
+    e.preventDefault();
+    // Stash the event so it can be triggered later.
+    window.deferredPrompt = e;
+    // Notify the app that it can show the install button
+    window.dispatchEvent(new CustomEvent('canInstallApp'));
 });
