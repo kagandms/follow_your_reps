@@ -132,9 +132,15 @@ export const Components = {
         title.className = 'list-item-title';
         
         const date = new Date(session.date);
-        title.textContent = new Intl.DateTimeFormat('tr-TR', { 
-            weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+        const dateStr = new Intl.DateTimeFormat('tr-TR', { 
+            weekday: 'short', month: 'short', day: 'numeric'
         }).format(date);
+        
+        if (session.name && session.name.trim() !== '') {
+            title.textContent = `${session.name} (${dateStr})`;
+        } else {
+            title.textContent = `Antrenman - ${dateStr}`;
+        }
         
         const subtitle = document.createElement('div');
         subtitle.className = 'list-item-subtitle';

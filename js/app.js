@@ -125,12 +125,20 @@ class App {
 
         // Date input
         const dateInput = content.querySelector('#session-date');
-        const d = new Date(session.date);
-        dateInput.value = d.toISOString().split('T')[0];
+        dateInput.value = this.currentSession.date;
         dateInput.addEventListener('change', (e) => {
-            session.date = new Date(e.target.value).toISOString();
-            Store.updateSession(session);
+            this.currentSession.date = e.target.value;
+            Store.updateSession(this.currentSession);
         });
+        
+        const nameInput = content.querySelector('#session-name-input');
+        if (nameInput) {
+            nameInput.value = this.currentSession.name || '';
+            nameInput.addEventListener('change', (e) => {
+                this.currentSession.name = e.target.value;
+                Store.updateSession(this.currentSession);
+            });
+        }
 
         // Finish button
         content.querySelector('#finish-session-btn').addEventListener('click', () => {

@@ -65,6 +65,7 @@ export const Store = {
         const newSession = {
             id: generateId(),
             date: date,
+            name: '',
             entries: []
         };
         data.sessions.push(newSession);

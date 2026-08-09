@@ -69,10 +69,12 @@
 
     <template id="tpl-workout-session">
         <div class="view session-view">
-            <div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 20px; padding: 10px 0;">
-                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid var(--primary-color); border-radius: 8px; background: rgba(52, 152, 219, 0.1); cursor: pointer;">
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; padding: 10px 0;">
+                <input type="text" id="session-name-input" placeholder="Antrenman İsmi (Örn: Göğüs & Arka Kol)" style="font-size: 1.2rem; font-weight: 600; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg); color: var(--text-color); padding: 12px; width: 100%; outline: none; font-family: inherit;">
+                
+                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid var(--primary-color); border-radius: 8px; background: rgba(52, 152, 219, 0.1); cursor: pointer; width: max-content;">
                     <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--primary-color)" stroke-width="2" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    <span style="font-size: 0.9rem; font-weight: 600; color: var(--primary-color);">TARİH:</span>
+                    <span style="font-size: 0.9rem; font-weight: 600; color: var(--primary-color);">Tarih Seçiniz:</span>
                     <input type="date" id="session-date" style="font-size: 1.1rem; font-weight: 700; border: none; background: transparent; color: var(--text-color); font-family: inherit; outline: none; padding: 0;">
                     <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--primary-color)" stroke-width="2" fill="none"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                 </div>
