@@ -66,6 +66,30 @@ class App {
         if (settingsBtn) {
             settingsBtn.addEventListener('click', () => this.showSettingsModal());
         }
+        
+        // Force Update App (Clear SW cache)
+        const updateBtn = content.querySelector('#force-update-btn');
+        if (updateBtn) {
+            updateBtn.addEventListener('click', () => {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then((registrations) => {
+                        for (let registration of registrations) {
+                            registration.unregister();
+                        }
+                        // Optionally clear caches if needed
+                        if ('caches' in window) {
+                            caches.keys().then((names) => {
+                                for (let name of names) caches.delete(name);
+                            }).then(() => window.location.reload(true));
+                        } else {
+                            window.location.reload(true);
+                        }
+                    });
+                } else {
+                    window.location.reload(true);
+                }
+            });
+        }
 
         // Bind Start Session
         const startBtn = content.querySelector('#start-session-btn');
