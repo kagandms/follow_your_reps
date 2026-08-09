@@ -6,13 +6,16 @@
     <title>Progressive Overload Tracker</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#121212">
+    <meta name="theme-color" content="#f8fafc">
     <!-- Apple Touch Icon for iOS -->
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
 </head>
 <body>
     <header class="app-header">
-        <h1>Progressive Overload</h1>
+        <button id="theme-toggle-btn" class="icon-btn" aria-label="Tema Değiştir">
+            <svg id="theme-icon-light" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            <svg id="theme-icon-dark" class="hidden" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
         <button id="nav-history-btn" class="icon-btn" aria-label="Geçmiş">
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
         </button>
@@ -40,7 +43,7 @@
     <template id="tpl-home">
         <div class="view home-view">
             <div class="start-session-container">
-                <button id="start-session-btn" class="btn primary-btn large-btn">Boş Antrenman Başlat</button>
+                <button id="start-session-btn" class="btn primary-btn large-btn">Antrenman Başlat</button>
             </div>
             
             <section class="volume-summary hidden" id="volume-summary-section">
@@ -51,7 +54,12 @@
             </section>
 
             <section class="recent-workouts">
-                <h2>Son Antrenmanlar</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h2 style="margin: 0;">Son Antrenmanlar</h2>
+                    <button id="open-settings-btn" class="icon-btn" aria-label="Ayarlar">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    </button>
+                </div>
                 <div id="recent-workouts-list">
                     <!-- Populated by JS -->
                 </div>
@@ -77,6 +85,25 @@
         </div>
     </template>
 
+    <!-- NEW: Exercise Focus Modal -->
+    <template id="tpl-exercise-focus">
+        <div class="view modal-view" id="exercise-focus-modal">
+            <div class="modal-header">
+                <h2 id="focus-exercise-name">Egzersiz Adı</h2>
+                <button class="icon-btn close-modal-btn">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="focus-sets-container">
+                    <!-- Set rows go here -->
+                </div>
+                <button id="focus-add-set-btn" class="btn primary-btn outline-btn" style="margin-top: 16px; width: 100%;">+ Set Ekle</button>
+                <button id="focus-show-history-btn" class="btn outline-btn" style="margin-top: 8px; width: 100%; font-size: 0.9rem;">Geçmişi Gör</button>
+            </div>
+        </div>
+    </template>
+
     <template id="tpl-exercise-selection">
         <div class="view modal-view" id="exercise-selection-modal">
             <div class="modal-header">
@@ -98,7 +125,6 @@
         </div>
     </template>
 
-    <!-- Template for Exercise History Modal -->
     <template id="tpl-exercise-history">
         <div class="view modal-view" id="exercise-history-modal">
             <div class="modal-header">
@@ -110,6 +136,27 @@
             <div class="modal-body">
                 <div id="exercise-history-list">
                     <!-- Tables populated by JS -->
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-settings">
+        <div class="view modal-view" id="settings-modal">
+            <div class="modal-header">
+                <button class="icon-btn close-modal-btn">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <h2>Ayarlar</h2>
+            </div>
+            <div class="modal-body">
+                <div style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 10px;">Veri Yönetimi</h3>
+                    <button id="export-data-btn" class="btn outline-btn" style="margin-bottom: 10px;">Verileri Dışa Aktar (Yedekle)</button>
+                    <label class="btn outline-btn" style="display: block; text-align: center; cursor: pointer;">
+                        Verileri İçe Aktar (Geri Yükle)
+                        <input type="file" id="import-data-btn" accept=".json" style="display: none;">
+                    </label>
                 </div>
             </div>
         </div>

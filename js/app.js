@@ -22,8 +22,36 @@ class App {
             this.renderHome();
         });
 
+        this.setupThemeToggle();
         this.setupTimer();
         this.renderHome();
+    }
+
+    setupThemeToggle() {
+        const btn = document.getElementById('theme-toggle-btn');
+        const iconLight = document.getElementById('theme-icon-light');
+        const iconDark = document.getElementById('theme-icon-dark');
+        
+        const isDark = localStorage.getItem('dark_theme') === 'true';
+        if (isDark) {
+            document.body.classList.add('dark-theme');
+            iconLight.classList.add('hidden');
+            iconDark.classList.remove('hidden');
+        }
+        
+        btn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            const darkActive = document.body.classList.contains('dark-theme');
+            localStorage.setItem('dark_theme', darkActive);
+            
+            if (darkActive) {
+                iconLight.classList.add('hidden');
+                iconDark.classList.remove('hidden');
+            } else {
+                iconLight.classList.remove('hidden');
+                iconDark.classList.add('hidden');
+            }
+        });
     }
 
     // --- ROUTING / VIEWS ---
@@ -32,6 +60,12 @@ class App {
         clearElement(this.appContent);
         const template = document.getElementById('tpl-home');
         const content = template.content.cloneNode(true);
+
+        // Settings
+        const settingsBtn = content.querySelector('#open-settings-btn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => this.showSettingsModal());
+        }
 
         // Bind Start Session
         const startBtn = content.querySelector('#start-session-btn');
@@ -69,14 +103,6 @@ class App {
                 );
                 listContainer.appendChild(item);
             });
-            
-            // Add Export Data button at the bottom
-            const exportBtn = document.createElement('button');
-            exportBtn.className = 'btn outline-btn large-btn';
-            exportBtn.style.marginTop = '20px';
-            exportBtn.textContent = 'Verileri Dışa / İçe Aktar';
-            exportBtn.onclick = () => this.showDataManagement();
-            listContainer.appendChild(exportBtn);
         }
 
         this.appContent.appendChild(content);
@@ -134,59 +160,13 @@ class App {
 
         this.currentSession.entries.forEach((entry, entryIndex) => {
             const exerciseDef = Store.getExercise(entry.exerciseId);
-            const prevPerformance = Store.getLastPerformance(entry.exerciseId, this.currentSession.id);
             
-            const card = Components.renderExerciseCard(
+            const card = Components.renderExerciseCardCompact(
                 entry, 
                 exerciseDef, 
-                prevPerformance,
-                // onAddSet
+                // onClick opens the focus modal
                 () => {
-                    let defaultWeight = 0;
-                    let defaultReps = 0;
-                    
-                    const currentSetCount = entry.sets.length;
-                    
-                    // Progressive Overload Auto-fill:
-                    // If previous performance has a set for this index, use it!
-                    if (prevPerformance && prevPerformance.sets && prevPerformance.sets[currentSetCount]) {
-                        defaultWeight = prevPerformance.sets[currentSetCount].weight;
-                        defaultReps = prevPerformance.sets[currentSetCount].reps;
-                    } 
-                    // Otherwise, just copy the last entered set
-                    else if (currentSetCount > 0) {
-                        const last = entry.sets[currentSetCount - 1];
-                        defaultWeight = last.weight;
-                        defaultReps = last.reps;
-                    }
-                    
-                    entry.sets.push({ weight: defaultWeight, reps: defaultReps, completed: false });
-                    Store.updateSession(this.currentSession);
-                    this.renderSessionExercises(); 
-                },
-                // onUpdateSet
-                (setIndex, field, value) => {
-                    entry.sets[setIndex][field] = value;
-                    Store.updateSession(this.currentSession);
-                },
-                // onToggleComplete
-                (setIndex, isCompleted) => {
-                    entry.sets[setIndex].completed = isCompleted;
-                    Store.updateSession(this.currentSession);
-                    // Start timer if set is completed
-                    if (isCompleted) {
-                        this.timerWidget.classList.remove('hidden');
-                    }
-                },
-                // onDeleteSet
-                (setIndex) => {
-                    entry.sets.splice(setIndex, 1);
-                    Store.updateSession(this.currentSession);
-                    this.renderSessionExercises();
-                },
-                // onShowHistory
-                () => {
-                    this.showExerciseHistoryModal(exerciseDef);
+                    this.showExerciseFocusModal(entry, exerciseDef);
                 }
             );
             
@@ -196,7 +176,8 @@ class App {
             delExBtn.textContent = 'Egzersizi Kaldır';
             delExBtn.style.width = '100%';
             delExBtn.style.marginTop = '8px';
-            delExBtn.onclick = () => {
+            delExBtn.onclick = (e) => {
+                e.stopPropagation(); // Prevent clicking the card
                 if(confirm('Bu egzersizi seanstan kaldırmak istediğinize emin misiniz?')) {
                     this.currentSession.entries.splice(entryIndex, 1);
                     Store.updateSession(this.currentSession);
@@ -367,10 +348,8 @@ class App {
                 completed: false
             }));
         } else {
-            // Default 3 empty sets
+            // Default 1 empty set
             initialSets = [
-                { weight: 0, reps: 0, completed: false },
-                { weight: 0, reps: 0, completed: false },
                 { weight: 0, reps: 0, completed: false }
             ];
         }
@@ -382,27 +361,129 @@ class App {
         
         Store.updateSession(this.currentSession);
         this.renderSessionExercises();
+        
+        // Open the focus modal immediately for the new exercise
+        const entryRef = this.currentSession.entries[this.currentSession.entries.length - 1];
+        const exerciseDef = Store.getExercise(exerciseId);
+        this.showExerciseFocusModal(entryRef, exerciseDef);
     }
 
-    // --- DATA MANAGEMENT ---
+    // --- NEW MODALS ---
     
-    showDataManagement() {
-        clearElement(this.appContent);
-        const container = document.createElement('div');
-        container.className = 'view';
-        container.style.padding = '20px';
+    showExerciseFocusModal(entry, exerciseDef) {
+        const template = document.getElementById('tpl-exercise-focus');
+        const content = template.content.cloneNode(true);
+        const modal = content.querySelector('.modal-view');
         
-        const title = document.createElement('h2');
-        title.textContent = 'Veri Yönetimi';
+        modal.querySelector('#focus-exercise-name').textContent = exerciseDef.name;
         
-        const warning = document.createElement('p');
-        warning.style.color = 'var(--text-secondary)';
-        warning.style.marginBottom = '20px';
-        warning.textContent = 'Verileriniz cihazınızda yerel olarak tutulur. Başka bir cihaza taşımak veya yedeklemek için dışa aktarabilirsiniz.';
+        const closeBtn = modal.querySelector('.close-modal-btn');
+        closeBtn.onclick = () => {
+            document.body.removeChild(modal);
+            this.renderSessionExercises(); // Refresh the compact view
+        };
         
-        const exportBtn = document.createElement('button');
-        exportBtn.className = 'btn primary-btn large-btn';
-        exportBtn.textContent = 'Verileri İndir (JSON Dışa Aktar)';
+        const container = modal.querySelector('#focus-sets-container');
+        const prevPerformance = Store.getLastPerformance(exerciseDef.id, this.currentSession.id);
+        
+        const renderSets = () => {
+            clearElement(container);
+            
+            // Table Header
+            const thead = document.createElement('div');
+            thead.style.display = 'grid';
+            thead.style.gridTemplateColumns = '32px 1fr 1fr 40px 40px';
+            thead.style.gap = '8px';
+            thead.style.marginBottom = '8px';
+            thead.style.color = 'var(--text-secondary)';
+            thead.style.fontSize = '0.8rem';
+            thead.style.textAlign = 'center';
+            thead.style.fontWeight = '600';
+            
+            thead.innerHTML = `
+                <div>Set</div>
+                <div>kg</div>
+                <div>Tekrar</div>
+                <div><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                <div><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
+            `;
+            container.appendChild(thead);
+            
+            entry.sets.forEach((set, index) => {
+                let prevSet = null;
+                if (prevPerformance && prevPerformance.sets && prevPerformance.sets[index]) {
+                    prevSet = prevPerformance.sets[index];
+                }
+                
+                const row = Components.renderSetRow(
+                    set, 
+                    index + 1, 
+                    prevSet, 
+                    // onUpdate
+                    (setIndex, field, value) => {
+                        entry.sets[setIndex][field] = value;
+                        Store.updateSession(this.currentSession);
+                    },
+                    // onToggle
+                    (setIndex, isCompleted) => {
+                        entry.sets[setIndex].completed = isCompleted;
+                        Store.updateSession(this.currentSession);
+                        if (isCompleted) {
+                            this.timerWidget.classList.remove('hidden');
+                        }
+                    },
+                    // onDelete
+                    (setIndex) => {
+                        entry.sets.splice(setIndex, 1);
+                        Store.updateSession(this.currentSession);
+                        renderSets();
+                    }
+                );
+                container.appendChild(row);
+            });
+        };
+        
+        renderSets();
+        
+        // Add Set Button
+        const addBtn = modal.querySelector('#focus-add-set-btn');
+        addBtn.onclick = () => {
+            let defaultWeight = 0;
+            let defaultReps = 0;
+            const currentSetCount = entry.sets.length;
+            
+            if (prevPerformance && prevPerformance.sets && prevPerformance.sets[currentSetCount]) {
+                defaultWeight = prevPerformance.sets[currentSetCount].weight;
+                defaultReps = prevPerformance.sets[currentSetCount].reps;
+            } else if (currentSetCount > 0) {
+                const last = entry.sets[currentSetCount - 1];
+                defaultWeight = last.weight;
+                defaultReps = last.reps;
+            }
+            
+            entry.sets.push({ weight: defaultWeight, reps: defaultReps, completed: false });
+            Store.updateSession(this.currentSession);
+            renderSets();
+        };
+        
+        // Show History Button
+        const historyBtn = modal.querySelector('#focus-show-history-btn');
+        historyBtn.onclick = () => {
+            this.showExerciseHistoryModal(exerciseDef);
+        };
+        
+        document.body.appendChild(modal);
+    }
+    
+    showSettingsModal() {
+        const template = document.getElementById('tpl-settings');
+        const content = template.content.cloneNode(true);
+        const modal = content.querySelector('.modal-view');
+        
+        const closeBtn = modal.querySelector('.close-modal-btn');
+        closeBtn.onclick = () => document.body.removeChild(modal);
+        
+        const exportBtn = modal.querySelector('#export-data-btn');
         exportBtn.onclick = () => {
             const data = Store.exportJson();
             const blob = new Blob([data], {type: 'application/json'});
@@ -413,27 +494,16 @@ class App {
             a.click();
         };
         
-        const importLabel = document.createElement('h3');
-        importLabel.textContent = 'İçe Aktar (Geri Yükle)';
-        importLabel.style.marginTop = '30px';
-        importLabel.style.marginBottom = '10px';
-        
-        const importInput = document.createElement('input');
-        importInput.type = 'file';
-        importInput.accept = '.json';
-        importInput.style.marginBottom = '10px';
-        
-        const importBtn = document.createElement('button');
-        importBtn.className = 'btn outline-btn large-btn';
-        importBtn.textContent = 'Dosyadan İçe Aktar';
-        importBtn.onclick = () => {
-            if(importInput.files.length === 0) return alert('Lütfen önce bir dosya seçin.');
-            const file = importInput.files[0];
+        const importInput = modal.querySelector('#import-data-btn');
+        importInput.onchange = (e) => {
+            if(e.target.files.length === 0) return;
+            const file = e.target.files[0];
             const reader = new FileReader();
-            reader.onload = (e) => {
-                const success = Store.importJson(e.target.result);
+            reader.onload = (ev) => {
+                const success = Store.importJson(ev.target.result);
                 if(success) {
                     alert('Veriler başarıyla içe aktarıldı!');
+                    document.body.removeChild(modal);
                     this.renderHome();
                 } else {
                     alert('İçe aktarma başarısız. Formatı kontrol edin.');
@@ -442,14 +512,7 @@ class App {
             reader.readAsText(file);
         };
         
-        container.appendChild(title);
-        container.appendChild(warning);
-        container.appendChild(exportBtn);
-        container.appendChild(importLabel);
-        container.appendChild(importInput);
-        container.appendChild(importBtn);
-        
-        this.appContent.appendChild(container);
+        document.body.appendChild(modal);
     }
 }
 

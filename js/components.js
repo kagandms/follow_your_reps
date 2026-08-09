@@ -1,68 +1,36 @@
 import { Store } from './store.js';
 
 export const Components = {
-    renderExerciseCard(exerciseEntry, exerciseDef, previousPerformance, onAddSet, onUpdateSet, onToggleComplete, onDeleteSet, onShowHistory) {
+    renderExerciseCardCompact(exerciseEntry, exerciseDef, onClick) {
         const card = document.createElement('div');
-        card.className = 'exercise-card';
+        card.className = 'exercise-card exercise-card-compact';
         card.dataset.id = exerciseDef.id;
 
-        // Header
         const header = document.createElement('div');
         header.className = 'exercise-header';
         
         const title = document.createElement('div');
         title.className = 'exercise-name';
         title.textContent = exerciseDef.name;
-        // Clicking title shows history
-        title.onclick = onShowHistory;
 
         header.appendChild(title);
         card.appendChild(header);
 
-        // Sets Table
-        const table = document.createElement('div');
-        table.className = 'sets-table';
+        const summary = document.createElement('div');
+        summary.className = 'exercise-summary-text';
         
-        const thead = document.createElement('div');
-        thead.style.display = 'grid';
-        thead.style.gridTemplateColumns = '32px 1fr 1fr 40px 40px';
-        thead.style.gap = '8px';
-        thead.style.marginBottom = '8px';
-        thead.style.color = 'var(--text-secondary)';
-        thead.style.fontSize = '0.8rem';
-        thead.style.textAlign = 'center';
-        thead.style.fontWeight = '600';
-        
-        // Removed SVG tick, just text for clarity, or keep it
-        thead.innerHTML = `
-            <div>Set</div>
-            <div>kg</div>
-            <div>Tekrar</div>
-            <div><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-            <div><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
-        `;
-        table.appendChild(thead);
+        if (exerciseEntry.sets.length === 0) {
+            summary.textContent = 'Set eklenmedi.';
+        } else {
+            const setTexts = exerciseEntry.sets.map((s) => {
+                const check = s.completed ? ' <span class="set-check-tick">✓</span>' : '';
+                return `${s.weight}x${s.reps}${check}`;
+            });
+            summary.innerHTML = `<strong>${exerciseEntry.sets.length} Set:</strong> ${setTexts.join(', ')}`;
+        }
 
-        // Render existing sets
-        exerciseEntry.sets.forEach((set, index) => {
-            // Find corresponding previous set if exists
-            let prevSet = null;
-            if (previousPerformance && previousPerformance.sets && previousPerformance.sets[index]) {
-                prevSet = previousPerformance.sets[index];
-            }
-            
-            const row = this.renderSetRow(set, index + 1, prevSet, onUpdateSet, onToggleComplete, onDeleteSet);
-            table.appendChild(row);
-        });
-
-        card.appendChild(table);
-
-        // Add Set Button
-        const addBtn = document.createElement('button');
-        addBtn.className = 'add-set-btn';
-        addBtn.textContent = '+ Set Ekle';
-        addBtn.onclick = onAddSet;
-        card.appendChild(addBtn);
+        card.appendChild(summary);
+        card.onclick = onClick;
 
         return card;
     },
