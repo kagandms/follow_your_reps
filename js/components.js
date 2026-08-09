@@ -279,7 +279,8 @@ export const Components = {
         
         const subtitle = document.createElement('div');
         subtitle.className = 'list-item-subtitle';
-        subtitle.textContent = `${template.exerciseIds ? template.exerciseIds.length : 0} egzersiz içeriyor`;
+        const exCount = template.exercises ? template.exercises.length : (template.exerciseIds ? template.exerciseIds.length : 0);
+        subtitle.textContent = `${exCount} egzersiz içeriyor`;
         
         contentDiv.appendChild(title);
         contentDiv.appendChild(subtitle);
