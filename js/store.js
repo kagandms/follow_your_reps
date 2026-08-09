@@ -1,7 +1,7 @@
 const STORAGE_KEY = 'progressive_overload_data';
 
 export const MUSCLE_GROUPS = [
-    'Chest', 'Back', 'Legs', 'Shoulders', 'Biceps', 'Triceps', 'Core', 'Cardio', 'Other'
+    'Göğüs', 'Sırt', 'Bacak', 'Omuz', 'Biceps', 'Triceps', 'Karın', 'Kardiyo', 'Diğer'
 ];
 
 // Initial Data Structure
@@ -35,7 +35,7 @@ export const Store = {
         return loadData().exercises.find(e => e.id === id);
     },
 
-    addExercise(name, muscleGroup = 'Other') {
+    addExercise(name, muscleGroup = 'Diğer') {
         const data = loadData();
         const existing = data.exercises.find(e => e.name.toLowerCase() === name.toLowerCase());
         
@@ -138,7 +138,7 @@ export const Store = {
         
         const data = loadData();
         const exercisesMap = {};
-        data.exercises.forEach(ex => exercisesMap[ex.id] = ex.muscleGroup || 'Other');
+        data.exercises.forEach(ex => exercisesMap[ex.id] = ex.muscleGroup || 'Diğer');
         
         sessions.forEach(session => {
             const sessionDate = new Date(session.date);

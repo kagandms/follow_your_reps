@@ -1,4 +1,4 @@
-const CACHE_NAME = 'progressive-overload-v1';
+const CACHE_NAME = 'progressive-overload-v2';
 const urlsToCache = [
   '/',
   '/index.html',

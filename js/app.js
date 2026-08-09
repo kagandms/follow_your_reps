@@ -290,7 +290,7 @@ class App {
                 
                 const subtitleDiv = document.createElement('div');
                 subtitleDiv.className = 'list-item-subtitle';
-                subtitleDiv.textContent = ex.muscleGroup || 'Other';
+                subtitleDiv.textContent = ex.muscleGroup || 'Diğer';
                 
                 item.appendChild(titleDiv);
                 item.appendChild(subtitleDiv);

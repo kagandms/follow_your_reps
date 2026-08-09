@@ -5,7 +5,7 @@
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#121212",
-  "description": "Track your sets, reps, and weights for progressive overload.",
+  "description": "İlerleyici Aşırı Yüklenme (Progressive Overload) odaklı antrenman takip uygulaması.",
   "icons": [
     {
       "src": "icons/icon-192x192.png",
