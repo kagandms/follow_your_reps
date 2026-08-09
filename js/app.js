@@ -447,9 +447,11 @@ class App {
             if (filter.length > 0 && !filtered.find(e => e.name.toLowerCase() === filter.toLowerCase())) {
                 createBtn.style.display = 'block';
                 muscleSelect.style.display = 'block';
+                saveBtn.style.display = 'none';
             } else {
                 createBtn.style.display = 'none';
                 muscleSelect.style.display = 'none';
+                saveBtn.style.display = 'block';
             }
         };
         

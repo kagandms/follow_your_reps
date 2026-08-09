@@ -8,12 +8,21 @@ export const Components = {
 
         const header = document.createElement('div');
         header.className = 'exercise-header';
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
         
         const title = document.createElement('div');
         title.className = 'exercise-name';
         title.textContent = exerciseDef.name;
 
+        const editIcon = document.createElement('div');
+        editIcon.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`;
+        editIcon.style.color = 'var(--primary-color)';
+        editIcon.style.cursor = 'pointer';
+
         header.appendChild(title);
+        header.appendChild(editIcon);
         card.appendChild(header);
 
         const summary = document.createElement('div');
