@@ -344,23 +344,10 @@ class App {
     addExerciseToSession(exerciseId) {
         if (!this.currentSession) return;
         
-        const prevPerformance = Store.getLastPerformance(exerciseId, this.currentSession.id);
-        let initialSets = [];
-        
-        // Progressive Overload Auto-fill for entirely new exercise entry
-        if (prevPerformance && prevPerformance.sets && prevPerformance.sets.length > 0) {
-            // Map the previous sets directly
-            initialSets = prevPerformance.sets.map(s => ({
-                weight: s.weight,
-                reps: s.reps,
-                completed: false
-            }));
-        } else {
-            // Default 1 empty set
-            initialSets = [
-                { weight: 0, reps: 0, completed: false }
-            ];
-        }
+        // Default 1 empty set
+        let initialSets = [
+            { weight: 0, reps: 0, completed: false }
+        ];
         
         this.currentSession.entries.push({
             exerciseId: exerciseId,
@@ -460,10 +447,7 @@ class App {
             let defaultReps = 0;
             const currentSetCount = localSets.length;
             
-            if (prevPerformance && prevPerformance.sets && prevPerformance.sets[currentSetCount]) {
-                defaultWeight = prevPerformance.sets[currentSetCount].weight;
-                defaultReps = prevPerformance.sets[currentSetCount].reps;
-            } else if (currentSetCount > 0) {
+            if (currentSetCount > 0) {
                 const last = localSets[currentSetCount - 1];
                 defaultWeight = last.weight;
                 defaultReps = last.reps;
