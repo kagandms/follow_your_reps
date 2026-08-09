@@ -487,7 +487,7 @@ class App {
     showExerciseManagerModal() {
         const template = document.getElementById('tpl-exercise-manager');
         const content = template.content.cloneNode(true);
-        const modal = content.querySelector('.modal-view').parentNode; // The overlay
+        const modal = content.querySelector('.modal-view');
         
         const closeBtn = modal.querySelector('.close-modal-btn');
         closeBtn.onclick = () => document.body.removeChild(modal);
