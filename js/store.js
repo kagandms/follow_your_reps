@@ -7,7 +7,8 @@ export const MUSCLE_GROUPS = [
 // Initial Data Structure
 const getInitialData = () => ({
     exercises: [],
-    sessions: []
+    sessions: [],
+    templates: []
 });
 
 // Generate ID
@@ -16,7 +17,9 @@ const generateId = () => Math.random().toString(36).slice(2, 11);
 // Load Data
 export const loadData = () => {
     const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : getInitialData();
+    const parsed = data ? JSON.parse(data) : getInitialData();
+    if (!parsed.templates) parsed.templates = [];
+    return parsed;
 };
 
 // Save Data
@@ -49,6 +52,43 @@ export const Store = {
         data.exercises.push(newExercise);
         saveData(data);
         return newExercise;
+    },
+
+    // --- TEMPLATES ---
+    getTemplates() {
+        return loadData().templates;
+    },
+
+    getTemplate(id) {
+        return loadData().templates.find(t => t.id === id);
+    },
+
+    saveTemplate(name, exerciseIds) {
+        const data = loadData();
+        const newTemplate = {
+            id: generateId(),
+            name,
+            exerciseIds
+        };
+        data.templates.push(newTemplate);
+        saveData(data);
+        return newTemplate;
+    },
+    
+    updateTemplate(id, name, exerciseIds) {
+        const data = loadData();
+        const index = data.templates.findIndex(t => t.id === id);
+        if (index !== -1) {
+            data.templates[index].name = name;
+            data.templates[index].exerciseIds = exerciseIds;
+            saveData(data);
+        }
+    },
+
+    deleteTemplate(id) {
+        const data = loadData();
+        data.templates = data.templates.filter(t => t.id !== id);
+        saveData(data);
     },
 
     // --- SESSIONS ---

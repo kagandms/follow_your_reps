@@ -46,6 +46,17 @@
                 <button id="start-session-btn" class="btn primary-btn large-btn">Antrenman Başlat</button>
             </div>
             
+            <!-- NEW: Sabit Günler (Templates) Menu -->
+            <section class="templates-section" style="margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h2 style="margin: 0;">Sabit Günlerim (Şablonlar)</h2>
+                    <button id="manage-templates-btn" class="icon-btn outline-btn" style="padding: 4px 12px; border-radius: 20px; font-size: 0.85rem;">Yönet</button>
+                </div>
+                <div id="home-templates-list" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px;">
+                    <!-- Populated by JS. E.g. little pill buttons for each template -->
+                </div>
+            </section>
+            
             <section class="volume-summary hidden" id="volume-summary-section">
                 <h2>7 Günlük Hacim (Set)</h2>
                 <div id="volume-stats-container" class="volume-grid">
@@ -128,7 +139,16 @@
                 </button>
                 <h2>Egzersiz Seç</h2>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="padding-bottom: 0;">
+                <div id="exercise-selection-templates-area" style="margin-bottom: 16px; display: none;">
+                    <div style="font-size: 0.9rem; font-weight: 600; color: var(--primary-color); margin-bottom: 8px;">Hazır Günlerden Seç:</div>
+                    <div id="exercise-selection-templates-list" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-body" style="padding-top: 0;">
                 <input type="text" id="exercise-search" placeholder="Ara veya yeni ekle..." autocomplete="off">
                 <select id="new-exercise-muscle" class="muscle-select" style="display: none; margin-top: 10px;">
                     <!-- Populated by JS -->
@@ -179,6 +199,52 @@
                     <h3 style="margin-bottom: 10px;">Uygulama Yönetimi</h3>
                     <button id="force-update-btn" class="btn outline-btn" style="margin-bottom: 10px;">🔄 Uygulamayı Güncelle (Tazele)</button>
                     <button id="install-app-btn" class="btn outline-btn" style="display: none; margin-bottom: 10px;">📲 Ana Ekrana Yükle</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- NEW: Template Manager Modal -->
+    <template id="tpl-template-manager">
+        <div class="view modal-view" id="template-manager-modal">
+            <div class="modal-header">
+                <button class="icon-btn close-modal-btn">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <h2>Sabit Günlerim</h2>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; height: calc(100vh - 60px);">
+                <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                    <input type="text" id="new-template-name" placeholder="Örn: Upper 1" style="flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg); color: var(--text-color);">
+                    <button id="create-template-btn" class="btn primary-btn">Oluştur</button>
+                </div>
+                
+                <div id="template-list-container" style="flex: 1; overflow-y: auto;">
+                    <!-- Template cards go here -->
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- NEW: Template Edit Modal (Selecting exercises for a template) -->
+    <template id="tpl-template-edit">
+        <div class="view modal-view" id="template-edit-modal">
+            <div class="modal-header">
+                <button class="icon-btn close-modal-btn">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <h2 id="template-edit-title">Şablon Düzenle</h2>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; height: calc(100vh - 60px);">
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">
+                    Bu şablona dahil etmek istediğiniz hareketleri seçin:
+                </div>
+                <input type="text" id="template-exercise-search" placeholder="Egzersiz ara..." style="margin-bottom: 10px;">
+                <div class="selectable-list" id="template-exercise-list" style="flex: 1; overflow-y: auto;">
+                    <!-- Exercises list with checkboxes go here -->
+                </div>
+                <div style="padding-top: 16px; margin-bottom: 20px;">
+                    <button id="save-template-exercises-btn" class="btn primary-btn large-btn" style="width: 100%;">Kaydet</button>
                 </div>
             </div>
         </div>

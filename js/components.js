@@ -251,5 +251,72 @@ export const Components = {
         });
         
         container.appendChild(table);
+    },
+    
+    // --- TEMPLATES ---
+    renderTemplatePill(template, onClick) {
+        const btn = document.createElement('button');
+        btn.className = 'btn outline-btn';
+        btn.style.whiteSpace = 'nowrap';
+        btn.style.padding = '6px 12px';
+        btn.style.borderRadius = '20px';
+        btn.style.fontSize = '0.9rem';
+        btn.textContent = template.name;
+        btn.onclick = onClick;
+        return btn;
+    },
+    
+    renderTemplateListItem(template, onClick, onEdit, onDelete) {
+        const item = document.createElement('div');
+        item.className = 'list-item';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.style.flex = '1';
+        
+        const title = document.createElement('div');
+        title.className = 'list-item-title';
+        title.textContent = template.name;
+        
+        const subtitle = document.createElement('div');
+        subtitle.className = 'list-item-subtitle';
+        subtitle.textContent = `${template.exerciseIds ? template.exerciseIds.length : 0} egzersiz içeriyor`;
+        
+        contentDiv.appendChild(title);
+        contentDiv.appendChild(subtitle);
+        contentDiv.onclick = onClick;
+        
+        item.appendChild(contentDiv);
+        
+        // Edit button
+        const editBtn = document.createElement('button');
+        editBtn.className = 'icon-btn';
+        editBtn.style.color = 'var(--primary-color)';
+        editBtn.style.marginRight = '8px';
+        editBtn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`;
+        editBtn.onclick = (e) => {
+            e.stopPropagation();
+            onEdit(template);
+        };
+
+        // Delete button
+        const delBtn = document.createElement('button');
+        delBtn.className = 'icon-btn danger delete-session-btn';
+        delBtn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+        delBtn.onclick = (e) => {
+            e.stopPropagation();
+            if(confirm(`'${template.name}' şablonunu silmek istediğinize emin misiniz?`)) {
+                onDelete(template.id);
+            }
+        };
+        
+        const actionsDiv = document.createElement('div');
+        actionsDiv.style.display = 'flex';
+        actionsDiv.style.alignItems = 'center';
+        actionsDiv.appendChild(editBtn);
+        actionsDiv.appendChild(delBtn);
+        
+        item.appendChild(actionsDiv);
+        
+        return item;
     }
 };

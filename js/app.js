@@ -83,6 +83,26 @@ class App {
             Components.renderVolumeStats(weeklyVolume, volumeContainer);
         }
 
+        // Populate Templates
+        const templatesList = content.querySelector('#home-templates-list');
+        const manageTemplatesBtn = content.querySelector('#manage-templates-btn');
+        const templates = Store.getTemplates();
+        
+        if (manageTemplatesBtn) {
+            manageTemplatesBtn.addEventListener('click', () => this.showTemplateManagerModal());
+        }
+        
+        if (templates.length === 0) {
+            if (templatesList) templatesList.innerHTML = '<span style="color: var(--text-secondary); font-size: 0.9rem;">Henüz sabit gününüz yok. Yönet diyerek ekleyin.</span>';
+        } else {
+            templates.forEach(t => {
+                const pill = Components.renderTemplatePill(t, () => {
+                    this.showTemplateManagerModal();
+                });
+                if (templatesList) templatesList.appendChild(pill);
+            });
+        }
+
         // Populate Recent Sessions
         const listContainer = content.querySelector('#recent-workouts-list');
         const sessions = Store.getSessions();
@@ -247,6 +267,123 @@ class App {
 
     // --- MODALS ---
 
+    showTemplateManagerModal() {
+        const template = document.getElementById('tpl-template-manager');
+        const content = template.content.cloneNode(true);
+        const modal = content.querySelector('.modal-view');
+        
+        const closeBtn = modal.querySelector('.close-modal-btn');
+        closeBtn.onclick = () => {
+            document.body.removeChild(modal);
+            this.renderHome(); // refresh home to show new templates
+        };
+        
+        const nameInput = modal.querySelector('#new-template-name');
+        const createBtn = modal.querySelector('#create-template-btn');
+        const listContainer = modal.querySelector('#template-list-container');
+        
+        const renderList = () => {
+            clearElement(listContainer);
+            const templates = Store.getTemplates();
+            if (templates.length === 0) {
+                listContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center; margin-top: 20px;">Henüz sabit gün şablonu oluşturmadınız.</p>';
+            } else {
+                templates.forEach(t => {
+                    const item = Components.renderTemplateListItem(
+                        t,
+                        () => this.showTemplateEditModal(t, () => renderList()),
+                        () => this.showTemplateEditModal(t, () => renderList()),
+                        (id) => {
+                            Store.deleteTemplate(id);
+                            renderList();
+                        }
+                    );
+                    listContainer.appendChild(item);
+                });
+            }
+        };
+        
+        createBtn.onclick = () => {
+            const val = nameInput.value.trim();
+            if (val) {
+                const newTpl = Store.saveTemplate(val, []);
+                nameInput.value = '';
+                this.showTemplateEditModal(newTpl, () => renderList());
+            }
+        };
+        
+        renderList();
+        document.body.appendChild(modal);
+    }
+
+    showTemplateEditModal(templateObj, onSaved) {
+        const template = document.getElementById('tpl-template-edit');
+        const content = template.content.cloneNode(true);
+        const modal = content.querySelector('.modal-view');
+        
+        modal.querySelector('#template-edit-title').textContent = `${templateObj.name} Düzenle`;
+        
+        const closeBtn = modal.querySelector('.close-modal-btn');
+        closeBtn.onclick = () => document.body.removeChild(modal);
+        
+        const searchInput = modal.querySelector('#template-exercise-search');
+        const listContainer = modal.querySelector('#template-exercise-list');
+        const saveBtn = modal.querySelector('#save-template-exercises-btn');
+        
+        let selectedIds = [...(templateObj.exerciseIds || [])];
+        const allExercises = Store.getExercises();
+        
+        const renderList = (filter = '') => {
+            clearElement(listContainer);
+            const filtered = allExercises.filter(e => e.name.toLowerCase().includes(filter.toLowerCase()));
+            
+            filtered.forEach(ex => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.style.cursor = 'pointer';
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'list-item-title';
+                titleDiv.textContent = ex.name;
+                
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.checked = selectedIds.includes(ex.id);
+                cb.style.marginRight = '12px';
+                cb.style.transform = 'scale(1.3)';
+                
+                item.onclick = () => {
+                    cb.checked = !cb.checked;
+                    if (cb.checked) {
+                        if (!selectedIds.includes(ex.id)) selectedIds.push(ex.id);
+                    } else {
+                        selectedIds = selectedIds.filter(id => id !== ex.id);
+                    }
+                };
+                
+                const wrapper = document.createElement('div');
+                wrapper.style.display = 'flex';
+                wrapper.style.alignItems = 'center';
+                wrapper.appendChild(cb);
+                wrapper.appendChild(titleDiv);
+                
+                item.appendChild(wrapper);
+                listContainer.appendChild(item);
+            });
+        };
+        
+        searchInput.addEventListener('input', (e) => renderList(e.target.value));
+        
+        saveBtn.onclick = () => {
+            Store.updateTemplate(templateObj.id, templateObj.name, selectedIds);
+            document.body.removeChild(modal);
+            if (onSaved) onSaved();
+        };
+        
+        renderList();
+        document.body.appendChild(modal);
+    }
+
     showExerciseSelectionModal() {
         const template = document.getElementById('tpl-exercise-selection');
         const content = template.content.cloneNode(true);
@@ -259,6 +396,29 @@ class App {
         const listContainer = modal.querySelector('#exercise-list');
         const createBtn = modal.querySelector('#create-new-exercise-btn');
         const muscleSelect = modal.querySelector('#new-exercise-muscle');
+        
+        // Templates Area
+        const templatesArea = modal.querySelector('#exercise-selection-templates-area');
+        const templatesList = modal.querySelector('#exercise-selection-templates-list');
+        const templates = Store.getTemplates();
+        
+        if (templatesArea && templatesList && templates.length > 0) {
+            templatesArea.style.display = 'block';
+            templates.forEach(t => {
+                const pill = Components.renderTemplatePill(t, () => {
+                    if (t.exerciseIds && t.exerciseIds.length > 0) {
+                        t.exerciseIds.forEach(exId => {
+                            this.addExerciseToSession(exId, false); 
+                        });
+                        this.renderSessionExercises();
+                        document.body.removeChild(modal);
+                    } else {
+                        alert('Bu şablonda egzersiz bulunmuyor.');
+                    }
+                });
+                templatesList.appendChild(pill);
+            });
+        }
         
         // Populate muscle dropdown
         MUSCLE_GROUPS.forEach(mg => {
@@ -341,7 +501,7 @@ class App {
         document.body.appendChild(modal);
     }
 
-    addExerciseToSession(exerciseId) {
+    addExerciseToSession(exerciseId, openFocus = true) {
         if (!this.currentSession) return;
         
         // Default 1 empty set
@@ -357,10 +517,12 @@ class App {
         Store.updateSession(this.currentSession);
         this.renderSessionExercises();
         
-        // Open the focus modal immediately for the new exercise
-        const entryRef = this.currentSession.entries[this.currentSession.entries.length - 1];
-        const exerciseDef = Store.getExercise(exerciseId);
-        this.showExerciseFocusModal(entryRef, exerciseDef);
+        if (openFocus) {
+            // Open the focus modal immediately for the new exercise
+            const entryRef = this.currentSession.entries[this.currentSession.entries.length - 1];
+            const exerciseDef = Store.getExercise(exerciseId);
+            this.showExerciseFocusModal(entryRef, exerciseDef);
+        }
     }
 
     // --- NEW MODALS ---
