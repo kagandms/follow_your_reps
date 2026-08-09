@@ -1,7 +1,7 @@
 import { Store } from './store.js';
 
 export const Components = {
-    renderExerciseCard(exerciseEntry, exerciseDef, previousPerformance, onAddSet, onUpdateSet, onToggleComplete, onShowHistory) {
+    renderExerciseCard(exerciseEntry, exerciseDef, previousPerformance, onAddSet, onUpdateSet, onToggleComplete, onDeleteSet, onShowHistory) {
         const card = document.createElement('div');
         card.className = 'exercise-card';
         card.dataset.id = exerciseDef.id;
@@ -25,7 +25,7 @@ export const Components = {
         
         const thead = document.createElement('div');
         thead.style.display = 'grid';
-        thead.style.gridTemplateColumns = '32px 1fr 1fr 40px';
+        thead.style.gridTemplateColumns = '32px 1fr 1fr 40px 40px';
         thead.style.gap = '8px';
         thead.style.marginBottom = '8px';
         thead.style.color = 'var(--text-secondary)';
@@ -39,6 +39,7 @@ export const Components = {
             <div>kg</div>
             <div>Tekrar</div>
             <div><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            <div><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
         `;
         table.appendChild(thead);
 
@@ -50,7 +51,7 @@ export const Components = {
                 prevSet = previousPerformance.sets[index];
             }
             
-            const row = this.renderSetRow(set, index + 1, prevSet, onUpdateSet, onToggleComplete);
+            const row = this.renderSetRow(set, index + 1, prevSet, onUpdateSet, onToggleComplete, onDeleteSet);
             table.appendChild(row);
         });
 
@@ -66,7 +67,7 @@ export const Components = {
         return card;
     },
 
-    renderSetRow(set, setNumber, prevSet, onUpdate, onToggle) {
+    renderSetRow(set, setNumber, prevSet, onUpdate, onToggle, onDelete) {
         const rowWrapper = document.createElement('div');
         rowWrapper.style.display = 'flex';
         rowWrapper.style.flexDirection = 'column';
@@ -75,7 +76,7 @@ export const Components = {
 
         const row = document.createElement('div');
         row.style.display = 'grid';
-        row.style.gridTemplateColumns = '32px 1fr 1fr 40px';
+        row.style.gridTemplateColumns = '32px 1fr 1fr 40px 40px';
         row.style.gap = 'var(--spacing-sm)';
         row.style.alignItems = 'center';
 
@@ -107,6 +108,15 @@ export const Components = {
         };
         row.appendChild(checkBtn);
         
+        // Delete Set Button
+        const delBtn = document.createElement('button');
+        delBtn.className = 'set-delete-btn';
+        delBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+        delBtn.onclick = () => {
+            onDelete(setNumber - 1);
+        };
+        row.appendChild(delBtn);
+        
         rowWrapper.appendChild(row);
 
         // Show Previous Performance under the row if exists
@@ -128,40 +138,17 @@ export const Components = {
         const group = document.createElement('div');
         group.className = 'set-input-group';
 
-        const minusBtn = document.createElement('button');
-        minusBtn.className = 'icon-btn';
-        minusBtn.textContent = '-';
-        minusBtn.onclick = () => {
-            const input = group.querySelector('input');
-            let val = parseFloat(input.value) || 0;
-            val = Math.max(0, val - step);
-            // Fix floating point issues
-            val = Math.round(val * 100) / 100;
-            input.value = val;
-            onChange(val);
-        };
-
         const input = document.createElement('input');
         input.type = 'number';
         input.value = value || '';
         input.inputMode = 'decimal';
-        input.onchange = (e) => onChange(parseFloat(e.target.value) || 0);
-
-        const plusBtn = document.createElement('button');
-        plusBtn.className = 'icon-btn';
-        plusBtn.textContent = '+';
-        plusBtn.onclick = () => {
-            const input = group.querySelector('input');
-            let val = parseFloat(input.value) || 0;
-            val += step;
-            val = Math.round(val * 100) / 100;
-            input.value = val;
+        input.onchange = (e) => {
+            let val = parseFloat(e.target.value) || 0;
+            if (val < 0) val = 0;
             onChange(val);
         };
 
-        group.appendChild(minusBtn);
         group.appendChild(input);
-        group.appendChild(plusBtn);
 
         return group;
     },

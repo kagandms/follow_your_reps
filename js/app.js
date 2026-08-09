@@ -178,6 +178,12 @@ class App {
                         this.timerWidget.classList.remove('hidden');
                     }
                 },
+                // onDeleteSet
+                (setIndex) => {
+                    entry.sets.splice(setIndex, 1);
+                    Store.updateSession(this.currentSession);
+                    this.renderSessionExercises();
+                },
                 // onShowHistory
                 () => {
                     this.showExerciseHistoryModal(exerciseDef);
@@ -361,8 +367,12 @@ class App {
                 completed: false
             }));
         } else {
-            // Default empty
-            initialSets = [{ weight: 0, reps: 0, completed: false }];
+            // Default 3 empty sets
+            initialSets = [
+                { weight: 0, reps: 0, completed: false },
+                { weight: 0, reps: 0, completed: false },
+                { weight: 0, reps: 0, completed: false }
+            ];
         }
         
         this.currentSession.entries.push({
