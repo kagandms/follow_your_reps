@@ -95,15 +95,11 @@ export const Store = {
             if (session.id === currentSessionId) continue;
             
             const entry = session.entries.find(e => e.exerciseId === exerciseId);
-            if (entry && entry.sets) {
-                // Sadece tamamlanmış setleri al
-                const completedSets = entry.sets.filter(s => s.completed);
-                if (completedSets.length > 0) {
-                    return {
-                        date: session.date,
-                        sets: completedSets // Orijinal array'i bozmamak için kopya/filtreli veriyoruz
-                    };
-                }
+            if (entry && entry.sets && entry.sets.length > 0) {
+                return {
+                    date: session.date,
+                    sets: entry.sets
+                };
             }
         }
         return null;
@@ -115,15 +111,11 @@ export const Store = {
         
         for (const session of sessions) {
             const entry = session.entries.find(e => e.exerciseId === exerciseId);
-            if (entry && entry.sets) {
-                // Sadece tamamlanmış setleri al
-                const completedSets = entry.sets.filter(s => s.completed);
-                if (completedSets.length > 0) {
-                    history.push({
-                        date: session.date,
-                        sets: completedSets
-                    });
-                }
+            if (entry && entry.sets && entry.sets.length > 0) {
+                history.push({
+                    date: session.date,
+                    sets: entry.sets
+                });
             }
         }
         return history;
