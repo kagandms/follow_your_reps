@@ -1,15 +1,6 @@
 import { Store } from './store.js';
 
 export const Components = {
-    // Renders the "Last time: 3x8 @ 60kg" string
-    renderPreviousPerformanceString(sets) {
-        if (!sets || sets.length === 0) return 'No previous data';
-        
-        const weight = sets[0].weight;
-        const reps = sets[0].reps;
-        return `Last time: ${sets.length} sets (e.g. ${reps}x @ ${weight}kg)`;
-    },
-
     renderExerciseCard(exerciseEntry, exerciseDef, previousPerformance, onAddSet, onUpdateSet, onToggleComplete, onShowHistory) {
         const card = document.createElement('div');
         card.className = 'exercise-card';
@@ -28,14 +19,6 @@ export const Components = {
         header.appendChild(title);
         card.appendChild(header);
 
-        // Previous Performance
-        if (previousPerformance) {
-            const prev = document.createElement('div');
-            prev.className = 'previous-performance';
-            prev.textContent = this.renderPreviousPerformanceString(previousPerformance.sets);
-            card.appendChild(prev);
-        }
-
         // Sets Table
         const table = document.createElement('div');
         table.className = 'sets-table';
@@ -50,17 +33,24 @@ export const Components = {
         thead.style.textAlign = 'center';
         thead.style.fontWeight = '600';
         
+        // Removed SVG tick, just text for clarity, or keep it
         thead.innerHTML = `
             <div>Set</div>
             <div>kg</div>
-            <div>Reps</div>
+            <div>Tekrar</div>
             <div><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
         `;
         table.appendChild(thead);
 
         // Render existing sets
         exerciseEntry.sets.forEach((set, index) => {
-            const row = this.renderSetRow(set, index + 1, onUpdateSet, onToggleComplete);
+            // Find corresponding previous set if exists
+            let prevSet = null;
+            if (previousPerformance && previousPerformance.sets && previousPerformance.sets[index]) {
+                prevSet = previousPerformance.sets[index];
+            }
+            
+            const row = this.renderSetRow(set, index + 1, prevSet, onUpdateSet, onToggleComplete);
             table.appendChild(row);
         });
 
@@ -69,16 +59,25 @@ export const Components = {
         // Add Set Button
         const addBtn = document.createElement('button');
         addBtn.className = 'add-set-btn';
-        addBtn.textContent = '+ Add Set';
+        addBtn.textContent = '+ Set Ekle';
         addBtn.onclick = onAddSet;
         card.appendChild(addBtn);
 
         return card;
     },
 
-    renderSetRow(set, setNumber, onUpdate, onToggle) {
+    renderSetRow(set, setNumber, prevSet, onUpdate, onToggle) {
+        const rowWrapper = document.createElement('div');
+        rowWrapper.style.display = 'flex';
+        rowWrapper.style.flexDirection = 'column';
+        rowWrapper.style.borderBottom = '1px solid var(--border-color)';
+        rowWrapper.style.padding = 'var(--spacing-sm) 0';
+
         const row = document.createElement('div');
-        row.className = 'set-row';
+        row.style.display = 'grid';
+        row.style.gridTemplateColumns = '32px 1fr 1fr 40px';
+        row.style.gap = 'var(--spacing-sm)';
+        row.style.alignItems = 'center';
 
         // Set Number
         const num = document.createElement('div');
@@ -107,8 +106,22 @@ export const Components = {
             onToggle(setNumber - 1, checkBtn.classList.contains('completed'));
         };
         row.appendChild(checkBtn);
+        
+        rowWrapper.appendChild(row);
 
-        return row;
+        // Show Previous Performance under the row if exists
+        if (prevSet) {
+            const prevLabel = document.createElement('div');
+            prevLabel.style.fontSize = '0.75rem';
+            prevLabel.style.color = 'var(--text-secondary)';
+            prevLabel.style.marginTop = '4px';
+            prevLabel.style.textAlign = 'center';
+            prevLabel.style.paddingLeft = '32px'; // align with inputs
+            prevLabel.textContent = `Önceki: ${prevSet.weight}kg x ${prevSet.reps}`;
+            rowWrapper.appendChild(prevLabel);
+        }
+
+        return rowWrapper;
     },
 
     createStepperInput(type, value, onChange, step) {
@@ -164,7 +177,7 @@ export const Components = {
         title.className = 'list-item-title';
         
         const date = new Date(session.date);
-        title.textContent = new Intl.DateTimeFormat('en-US', { 
+        title.textContent = new Intl.DateTimeFormat('tr-TR', { 
             weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
         }).format(date);
         
@@ -175,7 +188,7 @@ export const Components = {
         if(session.entries) {
             session.entries.forEach(e => setsCount += (e.sets ? e.sets.length : 0));
         }
-        subtitle.textContent = `${exCount} exercises, ${setsCount} sets`;
+        subtitle.textContent = `${exCount} egzersiz, ${setsCount} set`;
 
         contentDiv.appendChild(title);
         contentDiv.appendChild(subtitle);
@@ -189,7 +202,7 @@ export const Components = {
         delBtn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
         delBtn.onclick = (e) => {
             e.stopPropagation();
-            if(confirm('Are you sure you want to delete this workout?')) {
+            if(confirm('Bu antrenmanı silmek istediğinize emin misiniz?')) {
                 onDelete(session.id);
             }
         };
@@ -203,10 +216,17 @@ export const Components = {
         Object.entries(stats).forEach(([muscle, count]) => {
             const card = document.createElement('div');
             card.className = 'volume-card';
-            card.innerHTML = `
-                <div class="sets">${count}</div>
-                <div class="muscle">${muscle}</div>
-            `;
+            
+            const countDiv = document.createElement('div');
+            countDiv.className = 'sets';
+            countDiv.textContent = count;
+            
+            const muscleDiv = document.createElement('div');
+            muscleDiv.className = 'muscle';
+            muscleDiv.textContent = muscle;
+            
+            card.appendChild(countDiv);
+            card.appendChild(muscleDiv);
             container.appendChild(card);
         });
     },
@@ -214,7 +234,7 @@ export const Components = {
     renderExerciseHistoryTable(history, container) {
         container.innerHTML = '';
         if (history.length === 0) {
-            container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; margin-top: 20px;">No history yet.</p>';
+            container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; margin-top: 20px;">Henüz geçmiş bulunmuyor.</p>';
             return;
         }
 
@@ -228,7 +248,7 @@ export const Components = {
             dateTd.colSpan = 3;
             dateTd.className = 'history-date-header';
             const date = new Date(session.date);
-            dateTd.textContent = new Intl.DateTimeFormat('en-US', { 
+            dateTd.textContent = new Intl.DateTimeFormat('tr-TR', { 
                 month: 'short', day: 'numeric', year: 'numeric' 
             }).format(date);
             dateRow.appendChild(dateTd);
@@ -236,7 +256,7 @@ export const Components = {
             
             // Header for sets
             const headerRow = document.createElement('tr');
-            headerRow.innerHTML = `<th>Set</th><th>Weight</th><th>Reps</th>`;
+            headerRow.innerHTML = `<th>Set</th><th>Ağırlık</th><th>Tekrar</th>`;
             table.appendChild(headerRow);
             
             // Sets

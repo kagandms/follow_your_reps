@@ -11,7 +11,7 @@ const getInitialData = () => ({
 });
 
 // Generate ID
-const generateId = () => Math.random().toString(36).substr(2, 9);
+const generateId = () => Math.random().toString(36).slice(2, 11);
 
 // Load Data
 export const loadData = () => {
@@ -90,16 +90,19 @@ export const Store = {
     // --- ANALYTICS / PROGRESSIVE OVERLOAD ---
     getLastPerformance(exerciseId, currentSessionId = null) {
         const sessions = this.getSessions();
-        // Look for the most recent session containing this exercise that IS NOT the current one
         for (const session of sessions) {
             if (session.id === currentSessionId) continue;
             
             const entry = session.entries.find(e => e.exerciseId === exerciseId);
-            if (entry && entry.sets.length > 0) {
-                return {
-                    date: session.date,
-                    sets: entry.sets
-                };
+            if (entry && entry.sets) {
+                // Sadece tamamlanmış setleri al
+                const completedSets = entry.sets.filter(s => s.completed);
+                if (completedSets.length > 0) {
+                    return {
+                        date: session.date,
+                        sets: completedSets // Orijinal array'i bozmamak için kopya/filtreli veriyoruz
+                    };
+                }
             }
         }
         return null;
@@ -111,11 +114,15 @@ export const Store = {
         
         for (const session of sessions) {
             const entry = session.entries.find(e => e.exerciseId === exerciseId);
-            if (entry && entry.sets.length > 0) {
-                history.push({
-                    date: session.date,
-                    sets: entry.sets
-                });
+            if (entry && entry.sets) {
+                // Sadece tamamlanmış setleri al
+                const completedSets = entry.sets.filter(s => s.completed);
+                if (completedSets.length > 0) {
+                    history.push({
+                        date: session.date,
+                        sets: completedSets
+                    });
+                }
             }
         }
         return history;
@@ -138,18 +145,16 @@ export const Store = {
             if(sessionDate >= sevenDaysAgo) {
                 session.entries.forEach(entry => {
                     const mg = exercisesMap[entry.exerciseId];
-                    const completedSets = entry.sets.filter(s => s.completed).length;
-                    // If no checkbox logic was strictly enforced, count all sets with valid weight/reps as completed volume, 
-                    // or just count all recorded sets for MVP simplicity. Let's count all sets for now.
-                    const totalSets = entry.sets.length;
-                    if(volume[mg] !== undefined) {
-                        volume[mg] += totalSets; // Volume = number of sets
+                    if (entry.sets) {
+                        const completedSets = entry.sets.filter(s => s.completed).length;
+                        if(volume[mg] !== undefined) {
+                            volume[mg] += completedSets;
+                        }
                     }
                 });
             }
         });
         
-        // Filter out 0 volume
         const filtered = {};
         Object.keys(volume).forEach(k => {
             if(volume[k] > 0) filtered[k] = volume[k];

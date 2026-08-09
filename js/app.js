@@ -54,7 +54,7 @@ class App {
         const sessions = Store.getSessions();
         
         if (sessions.length === 0) {
-            listContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center; margin-top: 20px;">No workouts yet. Start one!</p>';
+            listContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center; margin-top: 20px;">Henüz antrenman yok. Bir tane başlatın!</p>';
         } else {
             sessions.forEach(session => {
                 const item = Components.renderSessionListItem(
@@ -74,7 +74,7 @@ class App {
             const exportBtn = document.createElement('button');
             exportBtn.className = 'btn outline-btn large-btn';
             exportBtn.style.marginTop = '20px';
-            exportBtn.textContent = 'Export / Import Data';
+            exportBtn.textContent = 'Verileri Dışa / İçe Aktar';
             exportBtn.onclick = () => this.showDataManagement();
             listContainer.appendChild(exportBtn);
         }
@@ -144,11 +144,22 @@ class App {
                 () => {
                     let defaultWeight = 0;
                     let defaultReps = 0;
-                    if (entry.sets.length > 0) {
-                        const last = entry.sets[entry.sets.length - 1];
+                    
+                    const currentSetCount = entry.sets.length;
+                    
+                    // Progressive Overload Auto-fill:
+                    // If previous performance has a set for this index, use it!
+                    if (prevPerformance && prevPerformance.sets && prevPerformance.sets[currentSetCount]) {
+                        defaultWeight = prevPerformance.sets[currentSetCount].weight;
+                        defaultReps = prevPerformance.sets[currentSetCount].reps;
+                    } 
+                    // Otherwise, just copy the last entered set
+                    else if (currentSetCount > 0) {
+                        const last = entry.sets[currentSetCount - 1];
                         defaultWeight = last.weight;
                         defaultReps = last.reps;
                     }
+                    
                     entry.sets.push({ weight: defaultWeight, reps: defaultReps, completed: false });
                     Store.updateSession(this.currentSession);
                     this.renderSessionExercises(); 
@@ -164,8 +175,6 @@ class App {
                     Store.updateSession(this.currentSession);
                     // Start timer if set is completed
                     if (isCompleted) {
-                        // Default to 1:30 (90s) timer when a set is completed
-                        // We could make this configurable, but let's default to a smart value or just show the widget
                         this.timerWidget.classList.remove('hidden');
                     }
                 },
@@ -178,11 +187,11 @@ class App {
             // Add Delete Exercise Button
             const delExBtn = document.createElement('button');
             delExBtn.className = 'icon-btn danger';
-            delExBtn.innerHTML = 'Remove Exercise';
+            delExBtn.textContent = 'Egzersizi Kaldır';
             delExBtn.style.width = '100%';
             delExBtn.style.marginTop = '8px';
             delExBtn.onclick = () => {
-                if(confirm('Remove this exercise from the session?')) {
+                if(confirm('Bu egzersizi seanstan kaldırmak istediğinize emin misiniz?')) {
                     this.currentSession.entries.splice(entryIndex, 1);
                     Store.updateSession(this.currentSession);
                     this.renderSessionExercises();
@@ -231,8 +240,7 @@ class App {
         
         if (remaining <= 0) {
             this.stopTimer();
-            this.timerDisplay.textContent = 'DONE';
-            // Vibrate if supported
+            this.timerDisplay.textContent = 'BİTTİ';
             if('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
             return;
         }
@@ -274,8 +282,19 @@ class App {
             filtered.forEach(ex => {
                 const item = document.createElement('div');
                 item.className = 'list-item';
-                item.innerHTML = `<div class="list-item-title">${ex.name}</div>
-                                  <div class="list-item-subtitle">${ex.muscleGroup || 'Other'}</div>`;
+                
+                // Secure creation (textContent instead of innerHTML)
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'list-item-title';
+                titleDiv.textContent = ex.name;
+                
+                const subtitleDiv = document.createElement('div');
+                subtitleDiv.className = 'list-item-subtitle';
+                subtitleDiv.textContent = ex.muscleGroup || 'Other';
+                
+                item.appendChild(titleDiv);
+                item.appendChild(subtitleDiv);
+                
                 item.onclick = () => {
                     this.addExerciseToSession(ex.id);
                     document.body.removeChild(modal);
@@ -286,7 +305,7 @@ class App {
             if (filter.length > 0 && !filtered.find(e => e.name.toLowerCase() === filter.toLowerCase())) {
                 createBtn.style.display = 'block';
                 muscleSelect.style.display = 'block';
-                createBtn.textContent = `Create "${filter}"`;
+                createBtn.textContent = `"${filter}" Oluştur`;
                 createBtn.onclick = () => {
                     const selectedMuscle = muscleSelect.value;
                     const newEx = Store.addExercise(filter, selectedMuscle);
@@ -314,7 +333,7 @@ class App {
         const content = template.content.cloneNode(true);
         const modal = content.querySelector('.modal-view');
         
-        modal.querySelector('#history-exercise-name').textContent = `${exerciseDef.name} History`;
+        modal.querySelector('#history-exercise-name').textContent = `${exerciseDef.name} Geçmişi`;
         
         const closeBtn = modal.querySelector('.close-modal-btn');
         closeBtn.onclick = () => document.body.removeChild(modal);
@@ -330,10 +349,25 @@ class App {
     addExerciseToSession(exerciseId) {
         if (!this.currentSession) return;
         
-        // Add default entry with 1 empty set
+        const prevPerformance = Store.getLastPerformance(exerciseId, this.currentSession.id);
+        let initialSets = [];
+        
+        // Progressive Overload Auto-fill for entirely new exercise entry
+        if (prevPerformance && prevPerformance.sets && prevPerformance.sets.length > 0) {
+            // Map the previous sets directly
+            initialSets = prevPerformance.sets.map(s => ({
+                weight: s.weight,
+                reps: s.reps,
+                completed: false
+            }));
+        } else {
+            // Default empty
+            initialSets = [{ weight: 0, reps: 0, completed: false }];
+        }
+        
         this.currentSession.entries.push({
             exerciseId: exerciseId,
-            sets: [{ weight: 0, reps: 0, completed: false }]
+            sets: initialSets
         });
         
         Store.updateSession(this.currentSession);
@@ -349,16 +383,16 @@ class App {
         container.style.padding = '20px';
         
         const title = document.createElement('h2');
-        title.textContent = 'Data Management';
+        title.textContent = 'Veri Yönetimi';
         
         const warning = document.createElement('p');
         warning.style.color = 'var(--text-secondary)';
         warning.style.marginBottom = '20px';
-        warning.textContent = 'Your data is saved locally on this device. Export it to back it up or move it to another device.';
+        warning.textContent = 'Verileriniz cihazınızda yerel olarak tutulur. Başka bir cihaza taşımak veya yedeklemek için dışa aktarabilirsiniz.';
         
         const exportBtn = document.createElement('button');
         exportBtn.className = 'btn primary-btn large-btn';
-        exportBtn.textContent = 'Export Data (JSON)';
+        exportBtn.textContent = 'Verileri İndir (JSON Dışa Aktar)';
         exportBtn.onclick = () => {
             const data = Store.exportJson();
             const blob = new Blob([data], {type: 'application/json'});
@@ -370,7 +404,7 @@ class App {
         };
         
         const importLabel = document.createElement('h3');
-        importLabel.textContent = 'Import Data';
+        importLabel.textContent = 'İçe Aktar (Geri Yükle)';
         importLabel.style.marginTop = '30px';
         importLabel.style.marginBottom = '10px';
         
@@ -381,18 +415,18 @@ class App {
         
         const importBtn = document.createElement('button');
         importBtn.className = 'btn outline-btn large-btn';
-        importBtn.textContent = 'Import Data';
+        importBtn.textContent = 'Dosyadan İçe Aktar';
         importBtn.onclick = () => {
-            if(importInput.files.length === 0) return alert('Select a file first');
+            if(importInput.files.length === 0) return alert('Lütfen önce bir dosya seçin.');
             const file = importInput.files[0];
             const reader = new FileReader();
             reader.onload = (e) => {
                 const success = Store.importJson(e.target.result);
                 if(success) {
-                    alert('Data imported successfully!');
+                    alert('Veriler başarıyla içe aktarıldı!');
                     this.renderHome();
                 } else {
-                    alert('Failed to import data. Invalid format.');
+                    alert('İçe aktarma başarısız. Formatı kontrol edin.');
                 }
             };
             reader.readAsText(file);
