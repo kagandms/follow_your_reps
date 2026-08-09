@@ -335,6 +335,7 @@ class App {
         
         let allExercises = Store.getExercises();
         
+        const createBtn = modal.querySelector('#template-create-new-exercise-btn');
         const muscleSelect = modal.querySelector('#template-new-exercise-muscle');
         
         MUSCLE_GROUPS.forEach(mg => {
@@ -393,8 +394,8 @@ class App {
                 setsInput.style.color = 'var(--text-color)';
                 
                 const repsInput = document.createElement('input');
-                repsInput.type = 'number';
-                repsInput.placeholder = 'Tekrar';
+                repsInput.type = 'text';
+                repsInput.placeholder = 'Tekrar (Örn: 6-8)';
                 repsInput.value = config ? config.reps : '';
                 repsInput.style.flex = '1';
                 repsInput.style.padding = '8px';
@@ -444,26 +445,30 @@ class App {
             });
             
             if (filter.length > 0 && !filtered.find(e => e.name.toLowerCase() === filter.toLowerCase())) {
+                createBtn.style.display = 'block';
                 muscleSelect.style.display = 'block';
             } else {
+                createBtn.style.display = 'none';
                 muscleSelect.style.display = 'none';
+            }
+        };
+        
+        createBtn.onclick = () => {
+            const name = searchInput.value.trim();
+            const muscle = muscleSelect.value;
+            if (name) {
+                const newEx = Store.addExercise(name, muscle);
+                // add it to templateExercises and check it automatically
+                templateExercises.push({ exerciseId: newEx.id, sets: '', reps: '' });
+                searchInput.value = '';
+                allExercises = Store.getExercises();
+                renderList();
             }
         };
         
         searchInput.addEventListener('input', (e) => renderList(e.target.value));
         
         saveBtn.onclick = () => {
-            const name = searchInput.value.trim();
-            if (name) {
-                const filter = name.toLowerCase();
-                const exists = allExercises.find(e => e.name.toLowerCase() === filter);
-                if (!exists) {
-                    const muscle = muscleSelect.value;
-                    const newEx = Store.addExercise(name, muscle);
-                    templateExercises.push({ exerciseId: newEx.id, sets: '', reps: '' });
-                }
-            }
-            
             Store.updateTemplate(templateObj.id, templateObj.name, templateExercises);
             document.body.removeChild(modal);
             if (onSaved) onSaved();
@@ -499,7 +504,7 @@ class App {
                         t.exercises.forEach(exConfig => {
                             let customSets = null;
                             const setsCount = parseInt(exConfig.sets, 10);
-                            const repsCount = parseInt(exConfig.reps, 10) || 0;
+                            const repsCount = exConfig.reps || ''; // keep as string (e.g. "6-8")
                             if (setsCount > 0) {
                                 customSets = [];
                                 for (let i = 0; i < setsCount; i++) {
