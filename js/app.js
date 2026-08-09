@@ -393,29 +393,26 @@ class App {
             });
             
             if (filter.length > 0 && !filtered.find(e => e.name.toLowerCase() === filter.toLowerCase())) {
-                createBtn.style.display = 'block';
                 muscleSelect.style.display = 'block';
             } else {
-                createBtn.style.display = 'none';
                 muscleSelect.style.display = 'none';
-            }
-        };
-        
-        createBtn.onclick = () => {
-            const name = searchInput.value.trim();
-            const muscle = muscleSelect.value;
-            if (name) {
-                const newEx = Store.addExercise(name, muscle);
-                selectedIds.push(newEx.id);
-                searchInput.value = '';
-                allExercises = Store.getExercises();
-                renderList();
             }
         };
         
         searchInput.addEventListener('input', (e) => renderList(e.target.value));
         
         saveBtn.onclick = () => {
+            const name = searchInput.value.trim();
+            if (name) {
+                const filter = name.toLowerCase();
+                const exists = allExercises.find(e => e.name.toLowerCase() === filter);
+                if (!exists) {
+                    const muscle = muscleSelect.value;
+                    const newEx = Store.addExercise(name, muscle);
+                    selectedIds.push(newEx.id);
+                }
+            }
+            
             Store.updateTemplate(templateObj.id, templateObj.name, selectedIds);
             document.body.removeChild(modal);
             if (onSaved) onSaved();
