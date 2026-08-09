@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Progressive Overload Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
+    <!-- Apple Touch Icon for iOS -->
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+</head>
+<body>
+    <header class="app-header">
+        <h1>Progressive Overload</h1>
+        <button id="nav-history-btn" class="icon-btn" aria-label="Geçmiş">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </button>
+    </header>
+
+    <main id="app-content">
+        <!-- Views will be rendered here dynamically -->
+    </main>
+
+    <!-- Rest Timer Widget (Global) -->
+    <div id="rest-timer-widget" class="floating-widget hidden">
+        <div class="timer-display">
+            <span id="timer-time">00:00</span>
+            <span class="timer-label">Resting</span>
+        </div>
+        <div class="timer-controls">
+            <button class="timer-btn" data-time="60">+1m</button>
+            <button class="timer-btn" data-time="90">+1:30</button>
+            <button class="timer-btn" data-time="120">+2m</button>
+            <button id="timer-stop-btn" class="timer-btn stop">Stop</button>
+        </div>
+    </div>
+
+    <!-- Templates for Dynamic Rendering -->
+    <template id="tpl-home">
+        <div class="view home-view">
+            <div class="start-session-container">
+                <button id="start-session-btn" class="btn primary-btn large-btn">Start Empty Workout</button>
+            </div>
+            
+            <section class="volume-summary hidden" id="volume-summary-section">
+                <h2>7-Day Volume (Sets)</h2>
+                <div id="volume-stats-container" class="volume-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <section class="recent-workouts">
+                <h2>Recent Workouts</h2>
+                <div id="recent-workouts-list">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+        </div>
+    </template>
+
+    <template id="tpl-workout-session">
+        <div class="view session-view">
+            <div class="session-header">
+                <input type="date" id="session-date" class="invisible-input">
+                <button id="finish-session-btn" class="btn success-btn">Finish</button>
+            </div>
+            
+            <div id="session-exercises" class="exercises-list">
+                <!-- Exercises will be added here -->
+            </div>
+
+            <div class="add-exercise-container">
+                <button id="add-exercise-btn" class="btn primary-btn outline-btn">+ Add Exercise</button>
+            </div>
+            <div style="height: 100px;"></div> <!-- Spacing for timer widget -->
+        </div>
+    </template>
+
+    <template id="tpl-exercise-selection">
+        <div class="view modal-view" id="exercise-selection-modal">
+            <div class="modal-header">
+                <button class="icon-btn close-modal-btn">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <h2>Select Exercise</h2>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="exercise-search" placeholder="Search or add new..." autocomplete="off">
+                <select id="new-exercise-muscle" class="muscle-select" style="display: none; margin-top: 10px;">
+                    <!-- Populated by JS -->
+                </select>
+                <div id="exercise-list" class="selectable-list">
+                    <!-- Exercises from history will be populated here -->
+                </div>
+                <button id="create-new-exercise-btn" class="btn primary-btn" style="display: none; margin-top: 10px; width: 100%;">Create New</button>
+            </div>
+        </div>
+    </template>
+
+    <!-- Template for Exercise History Modal -->
+    <template id="tpl-exercise-history">
+        <div class="view modal-view" id="exercise-history-modal">
+            <div class="modal-header">
+                <button class="icon-btn close-modal-btn">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <h2 id="history-exercise-name">Exercise History</h2>
+            </div>
+            <div class="modal-body">
+                <div id="exercise-history-list">
+                    <!-- Tables populated by JS -->
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script type="module" src="js/app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
